@@ -12,7 +12,7 @@ class Account:
         self.tournaments = kwargs.get('tournaments',[])                     #List of tournaments participated in
         self.tournament_wins = kwargs.get('tournament_wins',0)              #How many overall wins of an entire tournament
         self.rating_history = kwargs.get('rating_history',[])               #Elo rank over time
-        self.handicap = kwargs.get('handicap',0)                                                             #Player handicap
+        self.handicap = kwargs.get('handicap',0)                            #Player handicap
         self.handicap_history = kwargs.get('handicap_history',[])           #Handicap over time
         self.record = kwargs.get('record', [])                              #Wins and losses and who against
         self.show = kwargs.get('show',True)                                 #Switch to False to stop plotting

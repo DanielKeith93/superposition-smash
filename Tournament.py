@@ -8,11 +8,11 @@ class Tournament:
         self.live = kwargs.get('live', False )                                  #(bool): is the tournament live and ongoing
         self.active_participants = kwargs.get('active_participants', [] )       #(list): competitors in tournament
         self.passive_participants = kwargs.get('passive_participants', [] )     #(list): non-competitors who placed bets
-        self.player_dict = kwargs.get('player_dict', {})
+        self.player_dict = kwargs.get('player_dict', {})                        #(dict): dictionary of players used by the DET obect
         self.winner = kwargs.get('winner', None )                               #(string): winner of whole tournamnet
         self.bracket = kwargs.get('bracket', None )                             #(string): match bracket structure
         self.matches = kwargs.get('matches', [] )                               #(list): matches completed
         self.match_bets = kwargs.get('match_bets', [] )                         #(list): bets placed on individual matches
         self.tournament_bets = kwargs.get('tournament_bets', [] )               #(list): bets placed on overall tournament winner
         self.DET = kwargs.get('DET', None )                                     #(DET): tournament object with the recorded matches and results
-        self.initial_odds = kwargs.get('initial_odds', {})
+        self.initial_odds = kwargs.get('initial_odds', {})                      #(dict): dictionary of tournament players and their respective odds to win
