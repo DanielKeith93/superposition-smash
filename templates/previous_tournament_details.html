@@ -1,0 +1,59 @@
+<html>
+  <head>
+    <style>
+    /* Set additional styling options for the columns*/
+    .column3 {
+    float: left;
+    width: 33%;
+    }
+
+    .row:after {
+    content: "";
+    display: table;
+    clear: both;
+    }
+
+    </style>
+ </head>
+  <body>
+
+    <h1>{{ tournament_name }}: details</h1>
+
+    Date: {{ tournament.date }} <br>
+    Overall Winner: {{ tournament.winner }} <br>
+
+    <div class="row">
+      <div class="column3">
+      
+      <h2>Tournament Bets</h2>
+      {% autoescape false %}
+        {{tournament_bet_txt}}
+      {% endautoescape %}
+
+      </div>
+
+      <div class="column3">
+
+      <h2>Matches</h2>
+      MOV: margin of victory<br>
+      <br>
+      {% autoescape false %}
+        {{match_txt}}
+      {% endautoescape %}
+      <br>
+
+      </div>
+
+      <div class="column3">
+
+        <form method="post" action="{{ url_for('tournaments_list', user_name=user_name) }}">
+          <button type="submit">Back</button>
+        </form>
+
+        <p>{{ debug_message }}</p>
+        
+      </div>
+    </div>
+    
+  </body>
+</html>

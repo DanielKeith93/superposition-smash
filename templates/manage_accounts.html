@@ -1,0 +1,65 @@
+<html>
+  <head>
+    <h1>Manage accounts</h1>
+    <hr>
+
+    <form action="" method="post">
+
+      <select name="account_name" id="account_name">
+        <option value="" disabled selected>Account username</option>
+        {% for each in account_list %}
+          <option value="{{each}}">{{each}}</option>
+        {% endfor %}
+      </select>
+
+      <hr>
+
+      Admin: <input type="text" name="isadmin"> <br>
+      Rating: <input type="text" name="rating"> <br>
+      Rating history: <input type="text" name="rating_history"> <br>
+      Coin: <input type="text" name="coin"> <br>
+      Coin history: <input type="text" name="coin_history"> <br>
+      Rewards: <input type="text" name="rewards"> <br>
+      Tournaments: <input type="text" name="tournaments"> <br>
+      Tournament wins: <input type="text" name="tournament_wins"> <br>
+      Handicap: <input type="text" name="handicap"> <br>
+      Handicap history: <input type="text" name="handicap_history"> <br>
+      Record: <input type="text" name="record"> <br>
+      Show: <input type="text" name="show"> <br>
+      <button type="submit" onclick="confirm_update(event)">Update</button>
+      <script>
+        function confirm_update(e)
+        {
+          name = document.getElementById('account_name').value
+            if(!confirm('Are you sure you wish to update this account: ' + name + '?')) {
+                e.preventDefault();
+            }
+        }
+        </script>
+    </form>
+
+    <hr>
+
+    <form method="post" action="">
+      New account name: <input type="text" name="new_account_name" id="new_account_name">
+      <button type="submit" onclick="confirm_new(event)">Create Account</button>
+      <script>
+        function confirm_new(e)
+        {
+          name = document.getElementById('new_account_name').value
+            if(!confirm('Are you sure you wish to create a new account: ' + name + '?')) {
+                e.preventDefault();
+            }
+        }
+        </script>
+    </form>
+    
+    <hr>
+
+    <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
+      <button type="submit">Back</button>
+    </form>
+
+    {{ debug_message }}
+  </head>
+</html>

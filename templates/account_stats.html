@@ -1,0 +1,108 @@
+<html>
+  <head>
+    <style>
+    /* Set additional styling options for the columns*/
+    .column {
+    float: left;
+    width: 50%;
+    }
+
+    .row:after {
+    content: "";
+    display: table;
+    clear: both;
+    }
+
+    </style>
+ </head>
+  <body>
+    <h1>{{ printed_username }}: stats</h1>
+    <hr>
+
+    <div class="row">
+      <div class="column">
+
+        <h2>General</h2>
+        Games played: {{ games_played }} <br>
+        Games won: {{ games_won }} ({{ game_win_percent }}%) <br>
+        Tournaments played: {{ tournaments_played }} <br>
+        Tournaments won: {{ tournaments_won }} ({{ tournament_win_percent }}%) <br>
+        Rewards redeemed: {{ rewards }} <br>
+        Recent record (last 10 games): {{ recent_record }} <br>
+        <br>
+        <h2>Match ups</h2>
+        <img src="{{ matchup_image }}" style="width:100%;height:auto;"/>
+        <br>
+        <h2>Rating</h2>
+        Current rating: {{ rating }} <br>
+        Career highest rating: {{ rating_max }} <br>
+        <br>
+        <img src="{{ rating_image }}" style="width:100%;height:auto;"/>
+        <br>
+        <h2>Coin</h2>
+        Current coin: {{ coin }} <br>
+        Career highest coin: {{ coin_max }} <br>
+        <br>
+        <h3>Match bets</h3>
+        Total bets: {{ total_match_bets }} <br>
+        Successful bets: {{ match_bets_won }} ({{ match_bets_percent }}%) <br>
+        Average bet: {{ average_match_bet }} <br>
+        Average odds: {{ average_match_odds }} <br>
+        Profit/loss: {{ match_profit_loss }} <br>
+        Favourite pick: {{ favourite_match_pick }} <br>
+        <br>
+        <h3>Tournament bets</h3>
+        Total bets: {{ total_tournament_bets }} <br>
+        Successful bets: {{ tournament_bets_won }} ({{ tournament_bets_percent }}%) <br>
+        Average bet: {{ average_tournament_bet }} <br>
+        Average odds: {{ average_tournament_odds }} <br>
+        Profit/loss: {{ tournament_profit_loss }} <br>
+        Favourite pick: {{ favourite_tournament_pick }} <br>
+        <br>
+        <img src="{{ coin_image }}" style="width:100%;height:auto;"/>
+        <br>
+        <h2>Handicap</h2> 
+        Current handicap: {{ handicap }} <br>
+        Career highest handicap: {{ handicap_max }} <br>
+        Career lowest handicap: {{ handicap_min }} <br>
+        <br>
+        <img src="{{ handicap_image }}" style="width:100%;height:auto;"/>
+        <br>
+      </div>
+
+      <div class="column">
+        <p>{{ debug_message }}</p>
+
+        <form method="post" action="{{ url_for('tournaments_list', user_name=user_name) }}">
+          <button type="submit">Tournaments</button>
+        </form>
+        <hr>
+        <!-- <h2>Change password</h2>
+        DO NOT use your normal password! Security is not guaranteed.
+        <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
+          Old password: <input type="password" name="old_password"> <br><br>
+          New password: <input type="password" name="new_password"> <br>
+          <input type="submit" name="change_password" value="Change">
+        </form>
+        <hr> -->
+        <form method="post" action="/logout">
+          <button type="submit" onclick="confirm_logout(event)">Logout</button>
+          <script>
+            function confirm_logout(e)
+            {
+                if(!confirm('Are you sure you wish to logout?')) {
+                    e.preventDefault();
+                }
+            }
+            </script>
+        </form>
+        <form method="post" action="{{ url_for('manage_accounts', user_name=user_name) }}" style="visibility:{{ visibility }}">
+          <button type="submit">Manage accounts</button>
+        </form>
+        <br><br>
+        
+      </div>
+    </div>
+    
+  </body>
+</html>
