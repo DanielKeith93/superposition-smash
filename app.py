@@ -2,7 +2,7 @@ from Account import Account
 from Tournament import Tournament
 import base64
 import datetime
-from double_elimination import Tournament as DET
+from DET import DET
 from flask import Flask, render_template, redirect, request, send_from_directory, session, url_for
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
@@ -77,14 +77,6 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs['tournament'] = load_tournament( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
 
-    kwargs['admin_visibility'] = "hidden"
-    kwargs['close_visibility'] = "hidden"
-    if account.isadmin:
-        kwargs['admin_visibility'] = "visible"
-        if kwargs['tournament'].winner:
-            kwargs['close_visibility'] = "visible"
-            kwargs['admin_visibility'] = "hidden"
-
     if "submit_button" in request.form:
         if request.form['submit_button']=="active":
             if kwargs['user_name'] not in kwargs['tournament'].active_participants:
@@ -139,6 +131,15 @@ def live_tournament_details( user_name, tournament_name ):
 
     save_tournament( kwargs['tournament'] )        
 
+    #decide what is to be shown in the live tournament template
+    kwargs['admin_visibility'] = "hidden"
+    kwargs['close_visibility'] = "hidden"
+    if account.isadmin:
+        kwargs['admin_visibility'] = "visible"
+        if kwargs['tournament'].winner:
+            kwargs['close_visibility'] = "visible"
+            kwargs['admin_visibility'] = "hidden"
+
     return render_template('live_tournament_details.html', **kwargs)
 
 #show details for a specific tournament
@@ -167,18 +168,23 @@ def previous_tournament_details( user_name, tournament_name ):
     mb = kwargs['tournament'].match_bets
     for idx, m in enumerate(ms):
         mb_txt += f"<strong>{cap_name(m[0])} def {cap_name(m[1])} (MOV: {m[2]})</strong><br>"
-        for b in mb[idx]:
-            mb_txt += f'{cap_name(b[0])} ({cap_name(b[1])}): {b[2]}<br>'
+        if mb:
+            for b in mb[idx]:
+                mb_txt += f'{cap_name(b[0])} ({cap_name(b[1])}): {b[2]}<br>'
         mb_txt += '<br>'
 
     kwargs['tournament_bet_txt'] = tb_txt
     kwargs['match_txt'] = mb_txt
 
-    if kwargs['tournament'].matches:
-        kwargs['bracket'] = kwargs['tournament'].bracket
+    if kwargs['tournament'].bracket:
+        kwargs['winners_bracket_txt'], kwargs['losers_bracket_txt'] = kwargs['tournament'].bracket[0], kwargs['tournament'].bracket[1]
 
+    kwargs['tournament_odds_txt'] = ""
     if kwargs['tournament'].initial_odds:
-        kwargs['initial_odds'] = kwargs['tournament'].initial_odds
+        for key in kwargs['tournament'].initial_odds:
+            odds = kwargs["tournament"].initial_odds[key]
+            winrate = round( 100/odds, 2 )
+            kwargs['tournament_odds_txt'] += f'{cap_name(key)} ({winrate}%): {odds}<br>'
 
     return render_template('previous_tournament_details.html', **kwargs)
 
@@ -479,6 +485,7 @@ def calculate_tournament_odds( tournament ):
 
     win_rates = [ 100 * winners.count(i+1) / reps for i in range(num_players) ]
 
+    tournament.initial_odds = {}
     for i in range(num_players):
         tournament.initial_odds[player_dict[i+1]] = round( 100 / win_rates[i] , 2 )
 
@@ -692,14 +699,12 @@ def enter_match( tournament, winner, loser, mov ):
     det = tournament.DET
     pd = tournament.player_dict
     for match in det.get_active_matches():
-        print( [ pd[p.get_competitor()] for p in match.get_participants()] )
-        print( [[winner.username,loser.username],[loser.username,winner.username]] )
         competitors = [ pd[p.get_competitor()] for p in match.get_participants()]
         potential_players = [[cap_name(winner.username),cap_name(loser.username)],
                             [cap_name(loser.username),cap_name(winner.username)]]
         if competitors in potential_players:
-            print( 'win added' )
             add_win( det, list(pd.keys())[list(pd.values()).index(cap_name(winner.username))] )
+            tournament.matches.append( [ cap_name(winner.username) ,cap_name(loser.username), mov ] )
             #if end of the tournament -> add tournament win
             if det.get_winners():
                 winner.tournament_wins += 1

@@ -4,13 +4,24 @@
     /* Set additional styling options for the columns*/
     .column3 {
     float: left;
-    width: 33%;
+    width: 30%;
+    padding: 5px;
+    }
+
+    .column23 {
+    float: left;
+    width: 60%;
+    padding: 5px;
     }
 
     .row:after {
     content: "";
     display: table;
     clear: both;
+    }
+
+    .border-right {
+        border-right: 1px solid black;
     }
 
     </style>
@@ -21,6 +32,47 @@
 
     Date: {{ tournament.date }} <br>
     Overall Winner: {{ tournament.winner }} <br>
+
+    <hr>
+    <p>{{ debug_message }}</p>
+    <hr>
+
+    <div>
+      <form method="post" action="{{ url_for('tournaments_list', user_name=user_name) }}">
+        <button type="submit">Back</button>
+      </form>
+    </div>
+
+    <hr>
+
+    <div class="row">
+      <div class="column23">
+        <h2>Tournament Bracket</h2>
+      </div>
+      <div class="column3">
+        <h2>Tournament Odds</h2>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="column3 border-right" style="text-align: right">
+        {% autoescape false %}
+          {{ winners_bracket_txt }}
+        {% endautoescape %}
+      </div>
+      <div class="column3" style="text-align: left" >
+        {% autoescape false %}
+          {{ losers_bracket_txt }}
+        {% endautoescape %}
+      </div>
+      <div class="column3">
+        {% autoescape false %}
+          {{ tournament_odds_txt }}
+        {% endautoescape %}
+      </div>
+    </div>
+
+    <hr>
 
     <div class="row">
       <div class="column3">
@@ -44,15 +96,6 @@
 
       </div>
 
-      <div class="column3">
-
-        <form method="post" action="{{ url_for('tournaments_list', user_name=user_name) }}">
-          <button type="submit">Back</button>
-        </form>
-
-        <p>{{ debug_message }}</p>
-        
-      </div>
     </div>
     
   </body>
