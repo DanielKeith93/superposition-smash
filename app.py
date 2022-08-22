@@ -4,6 +4,7 @@ import base64
 import datetime
 from DET import DET
 from flask import Flask, render_template, redirect, request, send_from_directory, session, url_for
+from flask_sqlalchemy import SQLAlchemy #experimenting with databases
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -18,6 +19,48 @@ from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
 app.secret_key = "There is rain outside"
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:\\Users\\Danny Boy\\Documents\\Code\\Github\\superposition-smash\\db.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
+
+class Account_db(db.Model):
+    """ User Model for storing user related details """
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(255), unique=True, nullable=False)
+    account = db.Column(db.PickleType(), nullable=True)
+
+    def __init__(self, name, account):
+        self.name = name
+        self.account = account
+
+class Tournament_db(db.Model):
+    """ User Model for storing user related details """
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(255), unique=True, nullable=False)
+    account = db.Column(db.PickleType(), nullable=True)
+
+    def __init__(self, name, account):
+        self.name = name
+        self.account = account
+
+db.create_all()
+
+'''
+# How to: add details to database
+# Create user
+adder = Account_db('Daniel', ExampleObject(3,4))
+# adder.add_python_object(ExampleObject(3,4))
+
+# Add to database
+db.session.add(adder)
+db.session.commit()
+
+# Retrieve python object
+account = Account_db.query.filter_by(name='Daniel').first()
+result = account.account.does_something_from_storage()
+
+print( account.name, result )
+'''
 
 ######### HTML routes
 @app.route('/favicon.ico')
