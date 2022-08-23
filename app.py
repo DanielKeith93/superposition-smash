@@ -4,7 +4,7 @@ import base64
 import datetime
 from DET import DET
 from flask import Flask, render_template, redirect, request, send_from_directory, session, url_for
-from flask_sqlalchemy import SQLAlchemy #experimenting with databases
+from flask_sqlalchemy import SQLAlchemy
 import io
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from matplotlib.figure import Figure
@@ -15,11 +15,13 @@ import pickle
 import random
 from werkzeug.security import generate_password_hash, check_password_hash
 
+current_dir = os.getcwd()
+
 #run by typing "python -m flask run" in terminal
 app = Flask(__name__)
 app.secret_key = "There is rain outside"
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///C:\\Users\\Danny Boy\\Documents\\Code\\Github\\superposition-smash\\db.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + current_dir + '\\db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
