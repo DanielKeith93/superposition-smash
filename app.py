@@ -114,8 +114,8 @@ def tournaments_list( user_name ):
         txt = create_tournament( new_tournament_name )
         kwargs['debug_message'] = txt
 
-    kwargs['live_tourns'] = get_all_live_tournaments()
-    kwargs['previous_tourns'] = get_all_previous_tournaments()
+    kwargs['live_tourns'] = get_all_live_tournaments_in_db()
+    kwargs['previous_tourns'] = get_all_previous_tournaments_in_db()
 
     #only allow to manage accounts if user is admin
     account = load_account_from_db( user_name )
@@ -135,7 +135,7 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs = dict()
     kwargs['user_name'] = user_name
     account = load_account_from_db( user_name )
-    kwargs['tournament'] = load_tournament( tournament_name )
+    kwargs['tournament'] = load_tournament_from_db( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
 
     if "submit_button" in request.form:
@@ -190,7 +190,7 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs['passive_participants'] = [ cap_name(x) for x in kwargs['tournament'].passive_participants ]
     kwargs['active_participants'] = [ cap_name(x) for x in kwargs['tournament'].active_participants ]
 
-    save_tournament( kwargs['tournament'] )        
+    save_tournament_to_db( kwargs['tournament'] )        
 
     #decide what is to be shown in the live tournament template
     kwargs['admin_visibility'] = "hidden"
@@ -211,7 +211,7 @@ def previous_tournament_details( user_name, tournament_name ):
 
     kwargs = dict()
     kwargs['user_name'] = user_name
-    kwargs['tournament'] = load_tournament( tournament_name )
+    kwargs['tournament'] = load_tournament_from_db( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
 
     tb_txt = ""
@@ -495,20 +495,24 @@ def exp_winrate( player1, player2 ):
 
 ######### Tournament functions
 #check whether tournament already exists
-def tournament_exist( name ):
-    for filename in os.listdir('tournaments'): #check the name of all existing tournaments
-        f = os.path.join('tournaments', filename)
-        if os.path.isfile(f):
-            tournament = load_tournament( filename[:-4] )
-            if name == tournament.name:
-                return True
-    return False
+# def tournament_exist( name ):
+#     for filename in os.listdir('tournaments'): #check the name of all existing tournaments
+#         f = os.path.join('tournaments', filename)
+#         if os.path.isfile(f):
+#             tournament = load_tournament( filename[:-4] )
+#             if name == tournament.name:
+#                 return True
+#     return False
+
+def tournament_exist_in_db( name ):
+    exists = db.session.query(db.exists().where(Tournament_db.name == name)).scalar()
+    return exists
 
 #create a new tournament
 def create_tournament( name ):
-    if not tournament_exist( name ): #check whether username already exists
+    if not tournament_exist_in_db( name ): #check whether username already exists
         tournament = Tournament( name, live=True )
-        save_tournament( tournament )
+        save_tournament_to_db( tournament )
         return "Tournament created successfully"
     else:
         return f"Tournament already exists! ({name})"
@@ -650,38 +654,58 @@ def update_bracket( tournament ):
     return tournament
 
 #return the class object for a given tournament name
-def load_tournament( name ):
-    with open( f'tournaments/{name}.txt', 'rb' ) as file:
-        name = pickle.load( file )
-    return name
+# def load_tournament( name ):
+#     with open( f'tournaments/{name}.txt', 'rb' ) as file:
+#         name = pickle.load( file )
+#     return name
+
+def load_tournament_from_db( name ):
+    tourn = db.session.query(Tournament_db).filter(Tournament_db.name==name).scalar()
+    return tourn.tournament
 
 #overwrite textfile with updated tournament data
-def save_tournament( tournament ):
-    with open( f'tournaments/{tournament.name}.txt', 'wb' ) as file:
-        pickle.dump(tournament, file)
+# def save_tournament( tournament ):
+#     with open( f'tournaments/{tournament.name}.txt', 'wb' ) as file:
+#         pickle.dump(tournament, file)
 
-def get_all_previous_tournaments():
-    previous_tourns = []
-    directory = 'tournaments/'
-    for filename in os.listdir(directory):
-        name = filename[:-4]
-        tourn = load_tournament( name )
-        if not tourn.live:
-            previous_tourns.append(tourn)
-    previous_tourns.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
-    return previous_tourns[::-1]
+#overwrite textfile with updated tournament data
+def save_tournament_to_db( updated_tournament ):
+    tourn = db.session.query(Tournament_db).filter(Tournament_db.name==updated_tournament.name).scalar()
+    tourn.tournament = updated_tournament
 
-def get_all_live_tournaments():
-    live_tourns = []
-    directory = 'tournaments/'
-    for filename in os.listdir(directory):
-        name = filename[:-4]
-        tourn = load_tournament( name )
-        if tourn.live:
-            live_tourns.append(tourn)
-    live_tourns.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
-    return live_tourns[::-1]
+# def get_all_previous_tournaments():
+#     previous_tourns = []
+#     directory = 'tournaments/'
+#     for filename in os.listdir(directory):
+#         name = filename[:-4]
+#         tourn = load_tournament( name )
+#         if not tourn.live:
+#             previous_tourns.append(tourn)
+#     previous_tourns.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
+#     return previous_tourns[::-1]
 
+# def get_all_live_tournaments():
+#     live_tourns = []
+#     directory = 'tournaments/'
+#     for filename in os.listdir(directory):
+#         name = filename[:-4]
+#         tourn = load_tournament( name )
+#         if tourn.live:
+#             live_tourns.append(tourn)
+#     live_tourns.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
+#     return live_tourns[::-1]
+
+def get_all_previous_tournaments_in_db():
+    tournaments = Tournament_db.query.all()
+    prev_tournaments_list = [ t.tournament for t in tournaments if not t.tournament.live ]
+    prev_tournaments_list.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
+    return prev_tournaments_list[::-1]
+
+def get_all_live_tournaments_in_db():
+    tournaments = Tournament_db.query.all()
+    live_tournaments_list = [ t.tournament for t in tournaments if t.tournament.live ]
+    live_tournaments_list.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
+    return live_tournaments_list[::-1]
 
 ######### Match functions
 #gets all the active matches from a tournament
