@@ -391,6 +391,7 @@ def manage_accounts( user_name ):
 
         save_account_to_db( account )
 
+
     elif new_account_name:
         txt = create_account_in_db( new_account_name, password='password' )
         kwargs['debug_message'] = txt
@@ -409,17 +410,6 @@ def check_if_logged_in( user_name ):
         return redirect(url_for('index'))
 
 #create a new account
-def create_account( username, password ):
-    username = username.lower()
-    password = generate_password_hash(password)
-    if not account_exist_in_db( username ): #check whether username already exists
-        account = Account( username, password )
-        save_account_to_db( account )
-        return "Account created successfully"
-    else:
-        return "Account already exists"
-
-#create a new account
 def create_account_in_db( username, password ):
     username = username.lower()
     password = generate_password_hash(password)
@@ -431,16 +421,6 @@ def create_account_in_db( username, password ):
         return "Account created successfully"
     else:
         return "Account already exists"
-
-#check whether account already exists
-# def account_exist( username ):
-#     for filename in os.listdir('accounts'): #check the username of all existing accounts
-#         f = os.path.join('accounts', filename)
-#         if os.path.isfile(f):
-#             account = load_account( filename[:-4] )
-#             if username == account.username:
-#                 return True
-#     return False
 
 #check whether account already exists
 def account_exist_in_db( username ):
@@ -466,17 +446,6 @@ def login_account( username, password ):
         return f"Account does not exist: {username}!"
 
 #return the class object for a given account username
-# def load_account( username ):
-#     with open( f'accounts/{username}.txt', 'rb' ) as file:
-#         username = pickle.load( file )
-#     return username
-
-# #overwrite textfile with updated account stats and attributes
-# def save_account( account ):
-#     with open( f'accounts/{account.username}.txt', 'wb' ) as file:
-#         pickle.dump(account, file)
-
-#return the class object for a given account username
 def load_account_from_db( username ):
     account = db.session.query(Account_db).filter(Account_db.name==username).scalar()
     return account.account
@@ -485,11 +454,6 @@ def load_account_from_db( username ):
 def save_account_to_db( updated_account ):
     account = db.session.query(Account_db).filter(Account_db.name==updated_account.username).scalar()
     account.account = updated_account
-
-#get list of all the names of existing accounts
-# def get_account_list():
-#     accounts_list = [ f[:-4] for f in os.listdir('accounts/') ]
-#     return accounts_list
 
 #get list of all the names of existing accounts
 def get_account_list_in_db():
@@ -505,28 +469,11 @@ def exp_winrate( player1, player2 ):
 
 
 ######### Tournament functions
-#check whether tournament already exists
-# def tournament_exist( name ):
-#     for filename in os.listdir('tournaments'): #check the name of all existing tournaments
-#         f = os.path.join('tournaments', filename)
-#         if os.path.isfile(f):
-#             tournament = load_tournament( filename[:-4] )
-#             if name == tournament.name:
-#                 return True
-#     return False
 
+#check whether tournament already exists
 def tournament_exist_in_db( name ):
     exists = db.session.query(db.exists().where(Tournament_db.name == name)).scalar()
     return exists
-
-#create a new tournament
-def create_tournament( name ):
-    if not tournament_exist_in_db( name ): #check whether username already exists
-        tournament = Tournament( name, live=True )
-        save_tournament_to_db( tournament )
-        return "Tournament created successfully"
-    else:
-        return f"Tournament already exists! ({name})"
 
 #create a new tournament
 def create_tournament_in_db( name ):
@@ -675,47 +622,14 @@ def update_bracket( tournament ):
     tournament.bracket = [ winners_bracket, losers_bracket ]
     return tournament
 
-#return the class object for a given tournament name
-# def load_tournament( name ):
-#     with open( f'tournaments/{name}.txt', 'rb' ) as file:
-#         name = pickle.load( file )
-#     return name
-
 def load_tournament_from_db( name ):
     tourn = db.session.query(Tournament_db).filter(Tournament_db.name==name).scalar()
     return tourn.tournament
 
 #overwrite textfile with updated tournament data
-# def save_tournament( tournament ):
-#     with open( f'tournaments/{tournament.name}.txt', 'wb' ) as file:
-#         pickle.dump(tournament, file)
-
-#overwrite textfile with updated tournament data
 def save_tournament_to_db( updated_tournament ):
     tourn = db.session.query(Tournament_db).filter(Tournament_db.name==updated_tournament.name).scalar()
     tourn.tournament = updated_tournament
-
-# def get_all_previous_tournaments():
-#     previous_tourns = []
-#     directory = 'tournaments/'
-#     for filename in os.listdir(directory):
-#         name = filename[:-4]
-#         tourn = load_tournament( name )
-#         if not tourn.live:
-#             previous_tourns.append(tourn)
-#     previous_tourns.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
-#     return previous_tourns[::-1]
-
-# def get_all_live_tournaments():
-#     live_tourns = []
-#     directory = 'tournaments/'
-#     for filename in os.listdir(directory):
-#         name = filename[:-4]
-#         tourn = load_tournament( name )
-#         if tourn.live:
-#             live_tourns.append(tourn)
-#     live_tourns.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
-#     return live_tourns[::-1]
 
 def get_all_previous_tournaments_in_db():
     tournaments = Tournament_db.query.all()
