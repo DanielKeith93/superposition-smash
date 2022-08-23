@@ -111,7 +111,7 @@ def tournaments_list( user_name ):
 
     new_tournament_name = request.form.get("new_tournament_name", "")
     if new_tournament_name:
-        txt = create_tournament( new_tournament_name )
+        txt = create_tournament_in_db( new_tournament_name )
         kwargs['debug_message'] = txt
 
     kwargs['live_tourns'] = get_all_live_tournaments_in_db()
@@ -349,8 +349,6 @@ def manage_accounts( user_name ):
     kwargs['user_name'] = user_name
     kwargs['debug_message'] = ''
 
-    kwargs['account_list'] = get_account_list_in_db()
-
     account_name = request.form.get("account_name", "")
     isadmin = request.form.get("isadmin", "")
     rating = request.form.get("rating", "")
@@ -393,12 +391,11 @@ def manage_accounts( user_name ):
 
         save_account_to_db( account )
 
-    elif new_account_name != "":
+    elif new_account_name:
+        txt = create_account_in_db( new_account_name, password='password' )
+        kwargs['debug_message'] = txt
 
-        if not account_exist_in_db( new_account_name ):
-            new_account = create_account( new_account_name, password='password' )
-        else:
-            kwargs['debug_message'] = f'Account already exists: {new_account_name}'
+    kwargs['account_list'] = get_account_list_in_db()
 
     return render_template('manage_accounts.html', **kwargs )
 
@@ -418,6 +415,19 @@ def create_account( username, password ):
     if not account_exist_in_db( username ): #check whether username already exists
         account = Account( username, password )
         save_account_to_db( account )
+        return "Account created successfully"
+    else:
+        return "Account already exists"
+
+#create a new account
+def create_account_in_db( username, password ):
+    username = username.lower()
+    password = generate_password_hash(password)
+    if not account_exist_in_db( username ): #check whether username already exists
+        account = Account( username, password )
+        new_entry = Account_db( username, account )
+        db.session.add(new_entry)
+        db.session.commit()
         return "Account created successfully"
     else:
         return "Account already exists"
@@ -485,6 +495,7 @@ def save_account_to_db( updated_account ):
 def get_account_list_in_db():
     accounts = Account_db.query.all()
     accounts_list = [ cap_name(a.name) for a in accounts ]
+    accounts_list.sort()
     return accounts_list
 
 #calculate win rate for a given pair of players
@@ -513,6 +524,17 @@ def create_tournament( name ):
     if not tournament_exist_in_db( name ): #check whether username already exists
         tournament = Tournament( name, live=True )
         save_tournament_to_db( tournament )
+        return "Tournament created successfully"
+    else:
+        return f"Tournament already exists! ({name})"
+
+#create a new tournament
+def create_tournament_in_db( name ):
+    if not tournament_exist_in_db( name ): #check whether username already exists
+        tournament = Tournament( name, live=True )
+        new_entry = Tournament_db( name, tournament )
+        db.session.add(new_entry)
+        db.session.commit()
         return "Tournament created successfully"
     else:
         return f"Tournament already exists! ({name})"
