@@ -349,7 +349,7 @@ def manage_accounts( user_name ):
     kwargs['user_name'] = user_name
     kwargs['debug_message'] = ''
 
-    kwargs['account_list'] = get_account_list()
+    kwargs['account_list'] = get_account_list_in_db()
 
     account_name = request.form.get("account_name", "")
     isadmin = request.form.get("isadmin", "")
@@ -395,7 +395,7 @@ def manage_accounts( user_name ):
 
     elif new_account_name != "":
 
-        if not account_exist( new_account_name ):
+        if not account_exist_in_db( new_account_name ):
             new_account = create_account( new_account_name, password='password' )
         else:
             kwargs['debug_message'] = f'Account already exists: {new_account_name}'
@@ -415,7 +415,7 @@ def check_if_logged_in( user_name ):
 def create_account( username, password ):
     username = username.lower()
     password = generate_password_hash(password)
-    if not account_exist( username ): #check whether username already exists
+    if not account_exist_in_db( username ): #check whether username already exists
         account = Account( username, password )
         save_account_to_db( account )
         return "Account created successfully"
@@ -447,7 +447,7 @@ def password_correct( username, password ):
 #login into existing account
 def login_account( username, password ):
     username = username.lower()
-    if account_exist( username ): #make sure account exists
+    if account_exist_in_db( username ): #make sure account exists
         if password_correct( username, password ):
             return "Login successful"
         else:
@@ -484,7 +484,7 @@ def get_account_list():
 #get list of all the names of existing accounts
 def get_account_list_in_db():
     accounts = Account_db.query.all()
-    accounts_list = [ a.name for a in accounts ]
+    accounts_list = [ cap_name(a.name) for a in accounts ]
     return accounts_list
 
 #calculate win rate for a given pair of players
