@@ -423,14 +423,14 @@ def create_account( username, password ):
         return "Account already exists"
 
 #check whether account already exists
-def account_exist( username ):
-    for filename in os.listdir('accounts'): #check the username of all existing accounts
-        f = os.path.join('accounts', filename)
-        if os.path.isfile(f):
-            account = load_account( filename[:-4] )
-            if username == account.username:
-                return True
-    return False
+# def account_exist( username ):
+#     for filename in os.listdir('accounts'): #check the username of all existing accounts
+#         f = os.path.join('accounts', filename)
+#         if os.path.isfile(f):
+#             account = load_account( filename[:-4] )
+#             if username == account.username:
+#                 return True
+#     return False
 
 #check whether account already exists
 def account_exist_in_db( username ):
@@ -456,15 +456,15 @@ def login_account( username, password ):
         return f"Account does not exist: {username}!"
 
 #return the class object for a given account username
-def load_account( username ):
-    with open( f'accounts/{username}.txt', 'rb' ) as file:
-        username = pickle.load( file )
-    return username
+# def load_account( username ):
+#     with open( f'accounts/{username}.txt', 'rb' ) as file:
+#         username = pickle.load( file )
+#     return username
 
-#overwrite textfile with updated account stats and attributes
-def save_account( account ):
-    with open( f'accounts/{account.username}.txt', 'wb' ) as file:
-        pickle.dump(account, file)
+# #overwrite textfile with updated account stats and attributes
+# def save_account( account ):
+#     with open( f'accounts/{account.username}.txt', 'wb' ) as file:
+#         pickle.dump(account, file)
 
 #return the class object for a given account username
 def load_account_from_db( username ):
@@ -477,9 +477,9 @@ def save_account_to_db( updated_account ):
     account.account = updated_account
 
 #get list of all the names of existing accounts
-def get_account_list():
-    accounts_list = [ f[:-4] for f in os.listdir('accounts/') ]
-    return accounts_list
+# def get_account_list():
+#     accounts_list = [ f[:-4] for f in os.listdir('accounts/') ]
+#     return accounts_list
 
 #get list of all the names of existing accounts
 def get_account_list_in_db():
