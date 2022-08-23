@@ -47,22 +47,38 @@ class Tournament_db(db.Model):
 
 db.create_all()
 
-'''
-# How to: add details to database
-# Create user
-adder = Account_db('Daniel', ExampleObject(3,4))
-# adder.add_python_object(ExampleObject(3,4))
+#return the class object for a given account username
+def load_account( username ):
+    with open( f'accounts/{username}.txt', 'rb' ) as file:
+        username = pickle.load( file )
+    return username
 
-# Add to database
-db.session.add(adder)
-db.session.commit()
+#return the class object for a given tournament name
+def load_tournament( name ):
+    with open( f'tournaments/{name}.txt', 'rb' ) as file:
+        name = pickle.load( file )
+    return name
 
-# Retrieve python object
-account = Account_db.query.filter_by(name='Daniel').first()
-result = account.account.does_something_from_storage()
+#if the entries are not in the database, then add them
+directory = 'accounts/'
+for filename in os.listdir(directory):
+    account_name = filename[:-4]
+    exists = db.session.query(db.exists().where(Account_db.name == account_name)).scalar()
+    if not exists:
+        object = load_account( account_name )
+        new_entry = Account_db( account_name, object )
+        db.session.add(new_entry)
+        db.session.commit()
 
-print( account.name, result )
-'''
+directory = 'tournaments/'
+for filename in os.listdir(directory):
+    tourn_name = filename[:-4]
+    exists = db.session.query(db.exists().where(Tournament_db.name == tourn_name)).scalar()
+    if not exists:
+        object = load_tournament( tourn_name )
+        new_entry = Tournament_db( tourn_name, object )
+        db.session.add(new_entry)
+        db.session.commit()
 
 ######### HTML routes
 @app.route('/favicon.ico')
@@ -434,12 +450,6 @@ def login_account( username, password ):
     else:
         return f"Account does not exist: {username}!"
 
-#return the class object for a given account username
-def load_account( username ):
-    with open( f'accounts/{username}.txt', 'rb' ) as file:
-        username = pickle.load( file )
-    return username
-
 #overwrite textfile with updated account stats and attributes
 def save_account( account ):
     with open( f'accounts/{account.username}.txt', 'wb' ) as file:
@@ -475,12 +485,6 @@ def create_tournament( name ):
         return "Tournament created successfully"
     else:
         return f"Tournament already exists! ({name})"
-
-#return the class object for a given tournament name
-def load_tournament( name ):
-    with open( f'tournaments/{name}.txt', 'rb' ) as file:
-        name = pickle.load( file )
-    return name
 
 def rangeBase1(length):
     return [i + 1 for i in range(length)]
