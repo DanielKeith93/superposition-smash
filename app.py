@@ -39,11 +39,11 @@ class Tournament_db(db.Model):
     """ User Model for storing user related details """
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(255), unique=True, nullable=False)
-    account = db.Column(db.PickleType(), nullable=True)
+    tournament = db.Column(db.PickleType(), nullable=True)
 
-    def __init__(self, name, account):
+    def __init__(self, name, tournament):
         self.name = name
-        self.account = account
+        self.tournament = tournament
 
 db.create_all()
 
@@ -118,7 +118,7 @@ def tournaments_list( user_name ):
     kwargs['previous_tourns'] = get_all_previous_tournaments()
 
     #only allow to manage accounts if user is admin
-    account = load_account( user_name )
+    account = load_account_from_db( user_name )
     if account.isadmin:
         kwargs['visibility']="visible"
     else:
@@ -134,7 +134,7 @@ def live_tournament_details( user_name, tournament_name ):
 
     kwargs = dict()
     kwargs['user_name'] = user_name
-    account = load_account( user_name )
+    account = load_account_from_db( user_name )
     kwargs['tournament'] = load_tournament( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
 
@@ -263,7 +263,7 @@ def account_stats( user_name ):
 
     kwargs = dict()
     kwargs['debug_message']=''
-    account = load_account( user_name )
+    account = load_account_from_db( user_name )
 
     #only allow to manage accounts if user is admin
     if account.isadmin:
@@ -283,7 +283,7 @@ def account_stats( user_name ):
         kwargs['debug_message'] = login_account( kwargs['user_name'], old_password )
         if kwargs['debug_message']=='Login successful':
             account.password = generate_password_hash(new_password)
-            save_account( account )
+            save_account_to_db( account )
             kwargs['debug_message']='Password updated'
         else:
             kwargs['debug_message']='Invalid password!'
@@ -368,7 +368,7 @@ def manage_accounts( user_name ):
     new_account_name = request.form.get("new_account_name", "")
 
     if account_name!="":
-        account = load_account( account_name )
+        account = load_account_from_db( account_name )
 
         #Quick and dirty check of the inputs and then update each attribute
         attributes = [[isadmin,'isadmin',isbool,'Admin must be boolean<br>'], 
@@ -391,7 +391,7 @@ def manage_accounts( user_name ):
                 else:
                     kwargs['debug_message']+=attribute[3]
 
-        save_account( account )
+        save_account_to_db( account )
 
     elif new_account_name != "":
 
@@ -417,7 +417,7 @@ def create_account( username, password ):
     password = generate_password_hash(password)
     if not account_exist( username ): #check whether username already exists
         account = Account( username, password )
-        save_account( account )
+        save_account_to_db( account )
         return "Account created successfully"
     else:
         return "Account already exists"
@@ -432,9 +432,14 @@ def account_exist( username ):
                 return True
     return False
 
+#check whether account already exists
+def account_exist_in_db( username ):
+    exists = db.session.query(db.exists().where(Account_db.name == username)).scalar()
+    return exists
+
 #check whether password is correct for particular account
 def password_correct( username, password ):
-    account = load_account( username )
+    account = load_account_from_db( username )
     if username==account.username and check_password_hash( account.password, password ):
         return True
     return False
@@ -450,14 +455,36 @@ def login_account( username, password ):
     else:
         return f"Account does not exist: {username}!"
 
+#return the class object for a given account username
+def load_account( username ):
+    with open( f'accounts/{username}.txt', 'rb' ) as file:
+        username = pickle.load( file )
+    return username
+
 #overwrite textfile with updated account stats and attributes
 def save_account( account ):
     with open( f'accounts/{account.username}.txt', 'wb' ) as file:
         pickle.dump(account, file)
 
+#return the class object for a given account username
+def load_account_from_db( username ):
+    account = db.session.query(Account_db).filter(Account_db.name==username).scalar()
+    return account.account
+
+#overwrite textfile with updated account stats and attributes
+def save_account_to_db( updated_account ):
+    account = db.session.query(Account_db).filter(Account_db.name==updated_account.username).scalar()
+    account.account = updated_account
+
 #get list of all the names of existing accounts
 def get_account_list():
     accounts_list = [ f[:-4] for f in os.listdir('accounts/') ]
+    return accounts_list
+
+#get list of all the names of existing accounts
+def get_account_list_in_db():
+    accounts = Account_db.query.all()
+    accounts_list = [ a.name for a in accounts ]
     return accounts_list
 
 #calculate win rate for a given pair of players
@@ -512,8 +539,8 @@ def calculate_tournament_odds( tournament ):
     p_win = np.zeros([num_players, num_players])
     for i in range(num_players):
         for j in range(i+1,num_players):
-            player_i = load_account( player_dict[i+1] )
-            player_j = load_account( player_dict[j+1] )
+            player_i = load_account_from_db( player_dict[i+1] )
+            player_j = load_account_from_db( player_dict[j+1] )
             p_win[i][j] = exp_winrate( player_i, player_j )
             p_win[j][i] = 1 - p_win[i][j]
 
@@ -622,6 +649,12 @@ def update_bracket( tournament ):
     tournament.bracket = [ winners_bracket, losers_bracket ]
     return tournament
 
+#return the class object for a given tournament name
+def load_tournament( name ):
+    with open( f'tournaments/{name}.txt', 'rb' ) as file:
+        name = pickle.load( file )
+    return name
+
 #overwrite textfile with updated tournament data
 def save_tournament( tournament ):
     with open( f'tournaments/{tournament.name}.txt', 'wb' ) as file:
@@ -663,8 +696,8 @@ def get_active_matches_and_stats( tournament ):
     left_txts = []
     right_txts = []
     for m in active_matches:
-        player1 = load_account( player_dict[m.get_participants()[0].get_competitor()] )
-        player2 = load_account( player_dict[m.get_participants()[1].get_competitor()] )
+        player1 = load_account_from_db( player_dict[m.get_participants()[0].get_competitor()] )
+        player2 = load_account_from_db( player_dict[m.get_participants()[1].get_competitor()] )
         txts.append( f"<strong>{cap_name(player1.username)}</strong> vs <strong>{cap_name(player2.username)}</strong><br>" )
 
         h1 = player1.handicap
@@ -761,8 +794,8 @@ def enter_match( tournament, winner, loser, mov ):
 
     tournament.DET = det
 
-    save_account( winner )
-    save_account( loser )
+    save_account_to_db( winner )
+    save_account_to_db( loser )
 
     return tournament
 
@@ -770,10 +803,10 @@ def enter_new_match_result( form, tourn ):
     debug = ""
     winner = form.get("new_winner", "").lower()
     if winner!="":
-        winner = load_account( winner )
+        winner = load_account_from_db( winner )
         loser = form.get("new_loser", "").lower()
         if loser!="":
-            loser = load_account( loser )
+            loser = load_account_from_db( loser )
             mov = form.get("new_mov", 0 ).lower()
             if isint(mov) and mov!='':
                 mov = int(mov)
