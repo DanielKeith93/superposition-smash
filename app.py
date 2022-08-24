@@ -19,8 +19,26 @@ current_dir = os.getcwd()
 
 #run by typing "python -m flask run" in terminal
 app = Flask(__name__)
+
 app.secret_key = "There is rain outside"
 app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0
+
+'''#For running the database over google coud services
+# Google Cloud SQL
+USER = "root"
+PASSWORD = "<V=caF~>zL<:\"hHx"
+PUBLIC_IP_ADDRESS = "34.116.115.25"
+DBNAME = "superposition-smash"
+PROJECT_ID = "superposition-smash"
+INSTANCE_NAME = "superposition-smash:australia-southeast1:superposition-smash"
+
+# app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:{PASSWORD}@{PUBLIC_IP_ADDRESS}/{DBNAME}?unix_socket=/cloudsql/{PROJECT_ID}:{INSTANCE_NAME}"
+app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{USER}:{PASSWORD}@/{DBNAME}?unix_socket=/cloudsql/{INSTANCE_NAME}"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+db = SQLAlchemy(app)
+'''
+
+#For database on local memory
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + current_dir + '\\db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
