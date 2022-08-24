@@ -472,6 +472,7 @@ def load_account_from_db( username ):
 def save_account_to_db( updated_account ):
     account = db.session.query(Account_db).filter(Account_db.name==updated_account.username).scalar()
     account.account = updated_account
+    db.session.commit()
 
 #get list of all the names of existing accounts
 def get_account_list_in_db():
@@ -648,6 +649,7 @@ def load_tournament_from_db( name ):
 def save_tournament_to_db( updated_tournament ):
     tourn = db.session.query(Tournament_db).filter(Tournament_db.name==updated_tournament.name).scalar()
     tourn.tournament = updated_tournament
+    db.session.commit()
 
 def get_all_previous_tournaments_in_db():
     tournaments = Tournament_db.query.all()
