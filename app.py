@@ -265,6 +265,10 @@ def previous_tournament_details( user_name, tournament_name ):
             winrate = round( 100/odds, 2 )
             kwargs['tournament_odds_txt'] += f'{cap_name(key)} ({winrate}%): {odds}<br>'
 
+    kwargs['tournament_log'] = []
+    if kwargs['tournament'].log:
+        kwargs['tournament_log'] = kwargs['tournament'].log.split('\n')    
+
     return render_template('previous_tournament_details.html', **kwargs)
 
 #Remove the user account from the session and logout
@@ -488,7 +492,6 @@ def exp_winrate( player1, player2 ):
 
 
 ######### Tournament functions
-
 #check whether tournament already exists
 def tournament_exist_in_db( name ):
     exists = db.session.query(db.exists().where(Tournament_db.name == name)).scalar()
@@ -663,6 +666,7 @@ def get_all_live_tournaments_in_db():
     live_tournaments_list.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
     return live_tournaments_list[::-1]
 
+
 ######### Match functions
 #gets all the active matches from a tournament
 def get_active_matches_and_stats( tournament ):
@@ -719,6 +723,7 @@ def get_active_matches_and_stats( tournament ):
 
     if tourn.get_winners():
         txts.append( f'{ player_dict[tourn.get_winners()[0]] } won the tournament!' )
+        tournament.log += f'tourn_win( SSBU, \'{player_dict[tourn.get_winners()[0]]}\')\n'
         stats.append( "" )
         left_txts.append( "" )
         right_txts.append( "" )
@@ -726,7 +731,11 @@ def get_active_matches_and_stats( tournament ):
     return txts, stats, left_txts, right_txts
 
 #Enter new results to progress the tournament
-def enter_match( tournament, winner, loser, mov ):
+def enter_match( tournament, winner, loser, mov, bet_txt="" ):
+
+    winner_bets, loser_bets = enter_bets( winner, loser, bet_txt )
+    tournament.log = f'match( SSBU, \'{winner}\', \'{loser}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
+
     k = 32                            #number of points available for each match, how much the rating changes after each game
     
     p1 = winner.rating                #get old rating for players
@@ -779,6 +788,7 @@ def enter_match( tournament, winner, loser, mov ):
 
     return tournament
 
+#collect the results for a new match and check whether valid
 def enter_new_match_result( form, tourn ):
     debug = ""
     winner = form.get("new_winner", "").lower()
@@ -831,6 +841,73 @@ def check_if_new_tournament( tourn, player ):
         player.rating_history.append([])
         player.record.append([])
     return player
+
+
+######### Betting functions
+#enter match bets
+def enter_bets( winner, loser, bet_txt ):
+    winner = load_account_from_db( winner )
+    loser = load_account_from_db( loser )
+    bank = load_account_from_db( 'Bank' )
+    bets = bet_txt.split('<br>')[:-1]
+    bets = [ b.split(' ')[:-1] for b in bets ]
+    wb = 'winner_bets={'
+    lb = 'loser_bets={'
+    err_txt = ""
+    
+    for b in bets:
+        if b[1][1:-2] == cap_name(winner.username):
+            wb += '\'' + b[0] + '\':'
+            player = load_account_from_db( b[0] )
+            amount = round(float(b[2]),2)
+            wb += str(amount) + ','
+
+            wr = exp_winrate( winner, loser )
+            winnings = round( amount*((1/wr)-1),2 )
+            if player.coin >= amount and bank.coin >= winnings:
+                transfer( player.username, str(winnings), save=False )
+            else:
+                err_txt += f'Insufficient funds for bet: account-{player.username}, amount-{amount:.2f}, winnings-{winnings:.2f}\n'
+        
+        elif b[1][1:-2] == cap_name(loser.username):
+            lb += '\'' + b[0] + '\':'
+            player = load_account_from_db( b[0] )
+            amount = round(float(b[2]),2)
+            lb += str(amount) + ','
+
+            wr = exp_winrate( winner, loser )
+            winnings = round( amount*((1/wr)-1),2 )
+
+            if player.coin >= amount:
+                transfer( player.username, str(-amount), save=False )
+            else:
+                err_txt += f'Insufficient funds for bet: account-{player.username}, amount-{amount:.2f}\n' 
+    
+    if wb[-1]==',':
+        wb = wb[:-1]
+    if lb[-1]==',':
+        lb = lb[:-1]
+    wb += '}'
+    lb += '}'
+    return wb, lb
+
+#Either give money to bank, or take from bank and give it to account
+def transfer( player, amount ):
+    player = load_account_from_db( player )
+    if cap_name(player.username)=='Bank':
+        bank = load_account_from_db( 'Bank' )
+        bank.coin = round( float(amount), 2 ) + round( float(bank.coin), 2 )
+        bank.coin_history[-1].append(bank.coin)
+        save_account_to_db( bank )
+    else:
+        bank = load_account_from_db( 'Bank' )
+        player.coin = round( float(amount), 2) + round( float(player.coin), 2 )
+        bank.coin = -round( float(amount), 2) + round( float(bank.coin), 2 )
+        player.coin_history[-1].append(player.coin)
+        bank.coin_history[-1].append(bank.coin)
+        save_account_to_db( player )
+        save_account_to_db( bank )
+
 
 ######### Handicap functions
 #get the thist for a players recent handicap record
