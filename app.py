@@ -32,7 +32,6 @@ DBNAME = "superposition-smash"
 PROJECT_ID = "superposition-smash"
 INSTANCE_NAME = "superposition-smash:australia-southeast1:superposition-smash"
 
-# app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+mysqldb://root:{PASSWORD}@{PUBLIC_IP_ADDRESS}/{DBNAME}?unix_socket=/cloudsql/{PROJECT_ID}:{INSTANCE_NAME}"
 app.config["SQLALCHEMY_DATABASE_URI"] = f"mysql+pymysql://{USER}:{PASSWORD}@/{DBNAME}?unix_socket=/cloudsql/{INSTANCE_NAME}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
