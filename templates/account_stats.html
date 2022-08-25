@@ -80,14 +80,14 @@
           <button type="submit">Tournaments</button>
         </form>
         <hr>
-        <!-- <h2>Change password</h2>
+        <h2>Change password</h2>
         DO NOT use your normal password! Security is not guaranteed.
-        <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
+        <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}" style="visibility:{{ visibility }}">
           Old password: <input type="password" name="old_password"> <br><br>
           New password: <input type="password" name="new_password"> <br>
           <input type="submit" name="change_password" value="Change">
         </form>
-        <hr> -->
+        <hr>
         <form method="post" action="/logout">
           <button type="submit" onclick="confirm_logout(event)">Logout</button>
           <script>
