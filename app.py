@@ -219,6 +219,10 @@ def live_tournament_details( user_name, tournament_name ):
             kwargs['close_visibility'] = "visible"
             kwargs['admin_visibility'] = "hidden"
 
+    kwargs['tournament_log'] = []
+    if kwargs['tournament'].log:
+        kwargs['tournament_log'] = kwargs['tournament'].log.split('\n')
+
     return render_template('live_tournament_details.html', **kwargs)
 
 #show details for a specific tournament
