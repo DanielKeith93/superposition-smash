@@ -156,6 +156,10 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs['tournament'] = load_tournament_from_db( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
 
+    kwargs['personal_rating'] = f'{account.rating:.0f}'
+    kwargs['personal_handicap'] = account.handicap
+    kwargs['personal_coin'] = f'{account.coin:.2f}'
+
     if "submit_button" in request.form:
         if request.form['submit_button']=="active":
             if kwargs['user_name'] not in kwargs['tournament'].active_participants:
