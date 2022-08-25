@@ -372,6 +372,8 @@ def manage_accounts( user_name ):
     kwargs['debug_message'] = ''
 
     account_name = request.form.get("account_name", "")
+    account_to_delete = request.form.get("account_to_delete", "")
+    tournament_to_delete = request.form.get("tournament_to_delete", "")
     isadmin = request.form.get("isadmin", "")
     rating = request.form.get("rating", "")
     rating_history = request.form.get("rating_history", "")
@@ -387,38 +389,51 @@ def manage_accounts( user_name ):
 
     new_account_name = request.form.get("new_account_name", "")
 
-    if account_name!="":
-        account = load_account_from_db( account_name )
+    if "submit_button" in request.form:
+        if request.form['submit_button']=="update":
+            if account_name!="":
+                account = load_account_from_db( account_name )
 
-        #Quick and dirty check of the inputs and then update each attribute
-        attributes = [[isadmin,'isadmin',isbool,'Admin must be boolean<br>'], 
-                [rating,'rating',isfloat,'Rating must be float<br>'],
-                [rating_history,'rating_history',islist,'Rating history must be list/list of lists of floats<br>'],
-                [coin,coin,'isfloat','Coin must be float<br>'],
-                [coin_history,'coin_history',islist,'Coin history must be list/list of lists of floats<br>'],
-                [rewards,'rewards',isint,'Rewards must be int<br>'],
-                [tournaments,'tournaments',islist,'Tournaments must be list of strings<br>'],
-                [tournament_wins,'tournament_wins',isint,'Tournament wins must be int<br>'],
-                [handicap,'handicap',isint,'Handicap must be int<br>'],
-                [handicap_history,'handicap_history',islist,'Handicap history must be list/list of lists of ints<br>'],
-                [record,'record',islist,'Record must be list/list of lists of strings<br>'],
-                [show,'show',isbool,'Show must be boolean<br>']]
+                #Quick and dirty check of the inputs and then update each attribute
+                attributes = [[isadmin,'isadmin',isbool,'Admin must be boolean<br>'], 
+                        [rating,'rating',isfloat,'Rating must be float<br>'],
+                        [rating_history,'rating_history',islist,'Rating history must be list/list of lists of floats<br>'],
+                        [coin,coin,'isfloat','Coin must be float<br>'],
+                        [coin_history,'coin_history',islist,'Coin history must be list/list of lists of floats<br>'],
+                        [rewards,'rewards',isint,'Rewards must be int<br>'],
+                        [tournaments,'tournaments',islist,'Tournaments must be list of strings<br>'],
+                        [tournament_wins,'tournament_wins',isint,'Tournament wins must be int<br>'],
+                        [handicap,'handicap',isint,'Handicap must be int<br>'],
+                        [handicap_history,'handicap_history',islist,'Handicap history must be list/list of lists of ints<br>'],
+                        [record,'record',islist,'Record must be list/list of lists of strings<br>'],
+                        [show,'show',isbool,'Show must be boolean<br>']]
 
-        for attribute in attributes:
-            if attribute[0]!="":
-                if attribute[2](attribute[0]):
-                    setattr( account, attribute[1], eval(attribute[0]) )
-                else:
-                    kwargs['debug_message']+=attribute[3]
+                for attribute in attributes:
+                    if attribute[0]!="":
+                        if attribute[2](attribute[0]):
+                            setattr( account, attribute[1], eval(attribute[0]) )
+                        else:
+                            kwargs['debug_message']+=attribute[3]
 
-        save_account_to_db( account )
+                save_account_to_db( account )
 
+        elif request.form['submit_button']=="create":
+            if new_account_name:
+                txt = create_account_in_db( new_account_name, password='password' )
+                kwargs['debug_message'] = txt
 
-    elif new_account_name:
-        txt = create_account_in_db( new_account_name, password='password' )
-        kwargs['debug_message'] = txt
+        elif request.form['submit_button']=="delete_account":
+            if account_to_delete:
+                del_account_from_db( account_to_delete )
+                kwargs['debug_message'] = f'Account successfully deleted: {account_to_delete}'
+
+        elif request.form['submit_button']=="delete_tournament":
+            if tournament_to_delete:
+                del_tournament_from_db( tournament_to_delete )
+                kwargs['debug_message'] = f'Tournament successfully deleted: {account_to_delete}'
 
     kwargs['account_list'] = get_account_list_in_db()
+    kwargs['tournament_list'] = [t.name for t in get_all_live_tournaments_in_db() + get_all_previous_tournaments_in_db()]
 
     return render_template('manage_accounts.html', **kwargs )
 
@@ -489,6 +504,12 @@ def get_account_list_in_db():
 def exp_winrate( player1, player2 ):
     difference = ( player1.rating + 50 * player1.handicap ) - ( player2.rating + 50 * player2.handicap )
     return 1 / ( 1 + 10 ** ( - difference / 400 ) )
+
+#Permanently delete account from database
+def del_account_from_db( name ):
+    name = name.lower()
+    db.session.query(Account_db).filter(Account_db.name==name).delete()
+    db.session.commit()
 
 
 ######### Tournament functions
@@ -665,6 +686,11 @@ def get_all_live_tournaments_in_db():
     live_tournaments_list = [ t.tournament for t in tournaments if t.tournament.live ]
     live_tournaments_list.sort(key=lambda x: datetime.datetime.strptime(x.date, '%d-%m-%Y')) #sort by chronological order
     return live_tournaments_list[::-1]
+
+#Delete tournament from database
+def del_tournament_from_db( name ):
+    db.session.query(Tournament_db).filter(Tournament_db.name==name).delete()
+    db.session.commit()
 
 
 ######### Match functions

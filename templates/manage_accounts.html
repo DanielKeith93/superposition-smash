@@ -29,7 +29,7 @@
       Handicap history: <input type="text" name="handicap_history"> <br>
       Record: <input type="text" name="record"> <br>
       Show: <input type="text" name="show"> <br>
-      <button type="submit" onclick="confirm_update(event)">Update</button>
+      <button type="submit" name="submit_button" value="update" onclick="confirm_update(event)">Update</button>
       <script>
         function confirm_update(e)
         {
@@ -45,7 +45,7 @@
 
     <form method="post" action="">
       New account name: <input type="text" name="new_account_name" id="new_account_name">
-      <button type="submit" onclick="confirm_new(event)">Create Account</button>
+      <button type="submit" name="submit_button" value="create" onclick="confirm_new(event)">Create Account</button>
       <script>
         function confirm_new(e)
         {
@@ -57,6 +57,48 @@
         </script>
     </form>
     
+    <hr>
+
+    <form action="" method="post">
+
+      <select name="account_to_delete" id="account_to_delete">
+        <option value="" disabled selected>Account to delete</option>
+        {% for each in account_list %}
+          <option value="{{each}}">{{each}}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" name="submit_button" value="delete_account" onclick="confirm_delete_account(event)">Delete account</button>
+      <script>
+        function confirm_delete_account(e)
+        {
+          name = document.getElementById('account_to_delete').value
+            if(!confirm('Are you sure you wish to delete this account: ' + name + '?')) {
+                e.preventDefault();
+            }
+        }
+        </script>
+    </form><br>
+
+    <form action="" method="post">
+
+      <select name="tournament_to_delete" id="tournament_to_delete">
+        <option value="" disabled selected>Tournament to delete</option>
+        {% for each in tournament_list %}
+          <option value="{{each}}">{{each}}</option>
+        {% endfor %}
+      </select>
+      <button type="submit" name="submit_button" value="delete_tournament" onclick="confirm_delete_tournament(event)">Delete tournament</button>
+      <script>
+        function confirm_delete_tournament(e)
+        {
+          name = document.getElementById('tournament_to_delete').value
+            if(!confirm('Are you sure you wish to delete this tournament: ' + name + '?')) {
+                e.preventDefault();
+            }
+        }
+        </script>
+    </form>
+
     <hr>
 
     <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
