@@ -90,9 +90,10 @@ for filename in os.listdir(directory):
 directory = 'tournaments/'
 for filename in os.listdir(directory):
     tourn_name = filename[:-4]
+    object = load_tournament( tourn_name )
+    tourn_name = object.name
     exists = db.session.query(db.exists().where(Tournament_db.name == tourn_name)).scalar()
     if not exists:
-        object = load_tournament( tourn_name )
         new_entry = Tournament_db( tourn_name, object )
         db.session.add(new_entry)
         db.session.commit()
