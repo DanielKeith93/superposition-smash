@@ -20,7 +20,7 @@
     </form>
 
     {% for tourn in live_tourns %}
-      <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tourn.name.replace(" ", "_")) }}">
+      <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tourn.name) }}">
         {{ tourn.name.replace("_"," ") }} - ({{ tourn.date }}) <button type="submit">Details</button><br>
       </form>
     {% endfor %}
@@ -29,7 +29,7 @@
     <h2>Previous</h2>
 
     {% for tourn in previous_tourns %}
-      <form method="post" action="{{ url_for('previous_tournament_details', user_name=user_name, tournament_name=tourn.name.replace(" ", "_")) }}">
+      <form method="post" action="{{ url_for('previous_tournament_details', user_name=user_name, tournament_name=tourn.name) }}">
         {{ tourn.name.replace("_"," ") }} - ({{ tourn.date }}): Winner: {{ tourn.winner }} <button type="submit">Details</button><br>
       </form>
     {% endfor %}
