@@ -182,7 +182,6 @@ def live_tournament_details( user_name, tournament_name ):
                     kwargs['tournament'].seed = int(request.form['seed'])
                 else:
                     kwargs['tournament'].seed = random.randrange(sys.maxsize)
-                kwargs['seed'] = kwargs['tournament'].seed
                 kwargs['tournament'] = start_tournament( kwargs['tournament'] )
                 kwargs['tournament'] = calculate_tournament_odds( kwargs['tournament'] )
             else:
@@ -206,7 +205,7 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs['personal_coin'] = f'{account.coin:.2f}'
     kwargs['personal_rewards'] = f'{account.rewards}'
 
-    kwargs['tournament_odds_txt'] = ""
+    kwargs['tournament_odds_txt'] = "Player (Win %): Odds<br>"
     if kwargs['tournament'].initial_odds:
         for key in kwargs['tournament'].initial_odds:
             odds = kwargs["tournament"].initial_odds[key]
@@ -228,6 +227,8 @@ def live_tournament_details( user_name, tournament_name ):
         kwargs['stats'] = stats
         kwargs['left_txts'] = left_txts
         kwargs['right_txts'] = right_txts
+
+    kwargs['seed'] = kwargs['tournament'].seed
 
     kwargs['passive_participants'] = [ cap_name(x) for x in kwargs['tournament'].passive_participants ]
     kwargs['active_participants'] = [ cap_name(x) for x in kwargs['tournament'].active_participants ]
@@ -259,6 +260,7 @@ def previous_tournament_details( user_name, tournament_name ):
     kwargs['user_name'] = user_name
     kwargs['tournament'] = load_tournament_from_db( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
+    kwargs['seed'] = kwargs['tournament'].seed
 
     tb_txt = ""
     tb = kwargs['tournament'].tournament_bets
@@ -779,7 +781,6 @@ def get_active_matches_and_stats( tournament ):
 
     if tourn.get_winners():
         txts.append( f'{ player_dict[tourn.get_winners()[0]] } won the tournament!' )
-        tournament.log += f'tourn_win( SSBU, \'{player_dict[tourn.get_winners()[0]]}\')\n'
         stats.append( "" )
         left_txts.append( "" )
         right_txts.append( "" )
@@ -790,7 +791,7 @@ def get_active_matches_and_stats( tournament ):
 def enter_match( tournament, winner, loser, mov, bet_txt="" ):
 
     winner_bets, loser_bets = enter_bets( winner, loser, bet_txt )
-    tournament.log = f'match( SSBU, \'{winner}\', \'{loser}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
+    tournament.log += f'match( SSBU, \'{cap_name(winner.username)}\', \'{cap_name(loser.username)}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
 
     k = 32                            #number of points available for each match, how much the rating changes after each game
     
@@ -833,6 +834,7 @@ def enter_match( tournament, winner, loser, mov, bet_txt="" ):
             if det.get_winners():
                 winner.tournament_wins += 1
                 tournament.winner = cap_name(winner.username)
+                tournament.log += f'tourn_win( SSBU, \'{tournament.winner}\')\n'
 
     tournament.DET = det
 
@@ -901,8 +903,8 @@ def check_if_new_tournament( tourn, player ):
 ######### Betting functions
 #enter match bets
 def enter_bets( winner, loser, bet_txt ):
-    winner = load_account_from_db( winner )
-    loser = load_account_from_db( loser )
+    winner = load_account_from_db( winner.username )
+    loser = load_account_from_db( loser.username )
     bank = load_account_from_db( 'bank' )
     bets = bet_txt.split('<br>')[:-1]
     bets = [ b.split(' ')[:-1] for b in bets ]

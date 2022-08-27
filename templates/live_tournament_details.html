@@ -148,30 +148,33 @@
 
     <h2>Enter Result</h2>
     <form action="" method="post" style="visibility:{{ admin_visibility }}">
-      Winner: <select name="new_winner">
+      Winner: <select name="new_winner" id="new_winner">
           {% for player in active_players %}
             <option value="{{player}}">{{player}}</option>"
           {% endfor %}
         </select>
-      Loser: <select name="new_loser">
+      Loser: <select name="new_loser" id="new_loser">
           {% for player in active_players %}
             <option value="{{player}}">{{player}}</option>"
           {% endfor %}
         </select>
-      MOV: <select name="new_mov">
+      MOV: <select name="new_mov" id="new_mov">
           <option value="1">1</option>"
           <option value="2">2</option>"
           <option value="3">3</option>"
         </select>
       <button type="submit" name="submit_button" value="new_match_result" onclick="confirm_newmatch(event)">Enter</button><br>
-            <script>
-            function confirm_newmatch(e)
-            {
-                if(!confirm('Confirm new match result')) {
-                    e.preventDefault();
-                }
+      <script>
+        function confirm_newmatch(e)
+        {
+          one = document.getElementById('new_winner').value
+          two = document.getElementById('new_loser').value
+          mov = document.getElementById('new_mov').value
+            if(!confirm('Confirm new match result: ' + one + ' def ' + two + ' (' + mov + ')')) {
+                e.preventDefault();
             }
-            </script>
+        }
+      </script>
     </form>
 
     <hr>
