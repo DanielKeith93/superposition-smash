@@ -156,10 +156,6 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs['tournament'] = load_tournament_from_db( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
 
-    kwargs['personal_rating'] = f'{account.rating:.0f}'
-    kwargs['personal_handicap'] = account.handicap
-    kwargs['personal_coin'] = f'{account.coin:.2f}'
-
     if "submit_button" in request.form:
         if request.form['submit_button']=="active":
             if kwargs['user_name'] not in kwargs['tournament'].active_participants:
@@ -185,6 +181,18 @@ def live_tournament_details( user_name, tournament_name ):
 
         elif request.form['submit_button']=="close_tournament":
             kwargs['tournament'].live = False
+
+        elif request.form['submit_button']=='redeem':
+            if account.coin<3000:
+                kwargs['debug_message'] = f'Insufficient funds to redeem ({account.coin:.2f})!'
+            else:
+                kwargs['debug_message'] = f'Gained 1 reward.'
+                account = redeem( account )
+
+    kwargs['personal_rating'] = f'{account.rating:.0f}'
+    kwargs['personal_handicap'] = account.handicap
+    kwargs['personal_coin'] = f'{account.coin:.2f}'
+    kwargs['personal_rewards'] = f'{account.rewards}'
 
     kwargs['tournament_odds_txt'] = ""
     if kwargs['tournament'].initial_odds:
@@ -941,6 +949,13 @@ def transfer( player, amount ):
         bank.coin_history[-1].append(bank.coin)
         save_account_to_db( player )
         save_account_to_db( bank )
+
+#Redeem coins for a reward
+def redeem( account ):
+    account.coin-=3000
+    account.rewards+=1
+    save_account_to_db( account )
+    return account
 
 
 ######### Handicap functions

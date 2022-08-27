@@ -44,7 +44,19 @@
       <h2>Personal Stats</h2>
       - Rating: {{personal_rating}}<br>
       - Handicap: {{personal_handicap}}<br>
-      - Coin: {{personal_coin}}
+      - Coin: {{personal_coin}}<br>
+      - Rewards: {{personal_rewards}}<br>
+      <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tournament_name ) }}">
+        <button type="submit" name="submit_button" value="redeem" onclick="confirm_redeem(event)">Redeem</button>
+        <script>
+          function confirm_redeem(e)
+          {
+              if(!confirm('Are you sure you want to redeem (3000)?')) {
+                  e.preventDefault();
+              }
+          }
+          </script>
+      </form>
     </div>
 
     <hr>
