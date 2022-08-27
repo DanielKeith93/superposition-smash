@@ -17,3 +17,4 @@ class Tournament:
         self.DET = kwargs.get('DET', None )                                     #(DET): tournament object with the recorded matches and results
         self.initial_odds = kwargs.get('initial_odds', {})                      #(dict): players and their odds of winning the whole tournament
         self.log = kwargs.get('log', "")                                        #(string): log of all events that occured during a tournament
+        self.seed = kwargs.get('seed', None)                                    #(int): number used to generate random orders

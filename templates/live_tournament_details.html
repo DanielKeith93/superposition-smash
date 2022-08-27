@@ -88,15 +88,16 @@
       <div class="column3">
 
         <form action="" method="post" style="visibility:{{ admin_visibility }}">
-            <button type="submit" name="submit_button" value="start_tournament" onclick="confirm_starttourn(event)">Start tournament</button><br>
-            <script>
-            function confirm_starttourn(e)
-            {
-                if(!confirm('Are you sure you\'re ready to start?')) {
-                    e.preventDefault();
-                }
-            }
-            </script>
+          Seed (optional): <input type="text" name="seed">
+          <button type="submit" name="submit_button" value="start_tournament" onclick="confirm_starttourn(event)">Start tournament</button><br>
+          <script>
+          function confirm_starttourn(e)
+          {
+              if(!confirm('Are you sure you\'re ready to start?')) {
+                  e.preventDefault();
+              }
+          }
+          </script>
         </form>
 
         <form action="" method="post" style="visibility:{{ close_visibility }}">
@@ -118,7 +119,7 @@
 
     <div class="row">
       <div class="column23">
-        <h2>Tournament Bracket</h2>
+        <h2>Tournament Bracket (Seed: {{seed}})</h2>
       </div>
       <div class="column3">
         <h2>Tournament Odds</h2>

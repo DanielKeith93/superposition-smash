@@ -13,6 +13,7 @@ import numpy as np
 import os
 import pickle
 import random
+import sys
 from werkzeug.security import generate_password_hash, check_password_hash
 
 current_dir = os.getcwd()
@@ -177,6 +178,11 @@ def live_tournament_details( user_name, tournament_name ):
 
         elif request.form['submit_button']=="start_tournament":
             if len(kwargs['tournament'].active_participants)>1:
+                if request.form['seed'] and isint(request.form['seed']):
+                    kwargs['tournament'].seed = int(request.form['seed'])
+                else:
+                    kwargs['tournament'].seed = random.randrange(sys.maxsize)
+                kwargs['seed'] = kwargs['tournament'].seed
                 kwargs['tournament'] = start_tournament( kwargs['tournament'] )
                 kwargs['tournament'] = calculate_tournament_odds( kwargs['tournament'] )
             else:
@@ -506,6 +512,7 @@ def login_account( username, password ):
 
 #return the class object for a given account username
 def load_account_from_db( username ):
+    username = username.lower()
     account = db.session.query(Account_db).filter(Account_db.name==username).scalar()
     return account.account
 
@@ -555,6 +562,7 @@ def rangeBase1(length):
     return [i + 1 for i in range(length)]
 
 def start_tournament( tournament ):
+    random.seed(tournament.seed)
     names = tournament.active_participants
     num_players = len(names)
     n = names
@@ -577,8 +585,8 @@ def calculate_tournament_odds( tournament ):
     p_win = np.zeros([num_players, num_players])
     for i in range(num_players):
         for j in range(i+1,num_players):
-            player_i = load_account_from_db( player_dict[i+1] )
-            player_j = load_account_from_db( player_dict[j+1] )
+            player_i = load_account_from_db( player_dict[i+1].lower() )
+            player_j = load_account_from_db( player_dict[j+1].lower() )
             p_win[i][j] = exp_winrate( player_i, player_j )
             p_win[j][i] = 1 - p_win[i][j]
 
@@ -728,8 +736,8 @@ def get_active_matches_and_stats( tournament ):
     left_txts = []
     right_txts = []
     for m in active_matches:
-        player1 = load_account_from_db( player_dict[m.get_participants()[0].get_competitor()] )
-        player2 = load_account_from_db( player_dict[m.get_participants()[1].get_competitor()] )
+        player1 = load_account_from_db( player_dict[m.get_participants()[0].get_competitor()].lower() )
+        player2 = load_account_from_db( player_dict[m.get_participants()[1].get_competitor()].lower() )
         txts.append( f"<strong>{cap_name(player1.username)}</strong> vs <strong>{cap_name(player2.username)}</strong><br>" )
 
         h1 = player1.handicap
@@ -895,7 +903,7 @@ def check_if_new_tournament( tourn, player ):
 def enter_bets( winner, loser, bet_txt ):
     winner = load_account_from_db( winner )
     loser = load_account_from_db( loser )
-    bank = load_account_from_db( 'Bank' )
+    bank = load_account_from_db( 'bank' )
     bets = bet_txt.split('<br>')[:-1]
     bets = [ b.split(' ')[:-1] for b in bets ]
     wb = 'winner_bets={'
