@@ -159,14 +159,18 @@ def live_tournament_details( user_name, tournament_name ):
     if "submit_button" in request.form:
         if request.form['submit_button']=="active":
             if kwargs['user_name'] not in kwargs['tournament'].active_participants:
-                account = check_if_new_tournament( kwargs['tournament'], account )
+                account, is_new = check_if_new_tournament( kwargs['tournament'], account )
+                if is_new:
+                    kwargs['debug_message'] = 'New tournament: 1000 awarded'
                 kwargs['tournament'].active_participants.append( kwargs['user_name'] )
             if kwargs['user_name'] in kwargs['tournament'].passive_participants:
                 kwargs['tournament'].passive_participants.remove( kwargs['user_name'] )
 
         elif request.form['submit_button']=="passive":
             if kwargs['user_name'] not in kwargs['tournament'].passive_participants:
-                account = check_if_new_tournament( kwargs['tournament'], account )
+                account, is_new = check_if_new_tournament( kwargs['tournament'], account )
+                if is_new:
+                    kwargs['debug_message'] = 'New tournament: 1000 awarded'
                 kwargs['tournament'].passive_participants.append( kwargs['user_name'] )
             if kwargs['user_name'] in kwargs['tournament'].active_participants:
                 kwargs['tournament'].active_participants.remove( kwargs['user_name'] )
@@ -188,7 +192,7 @@ def live_tournament_details( user_name, tournament_name ):
             if account.coin<3000:
                 kwargs['debug_message'] = f'Insufficient funds to redeem ({account.coin:.2f})!'
             else:
-                kwargs['debug_message'] = f'Gained 1 reward.'
+                kwargs['debug_message'] = f'Gained 1 reward'
                 account = redeem( account )
 
     kwargs['personal_rating'] = f'{account.rating:.0f}'
@@ -883,7 +887,7 @@ def check_if_new_tournament( tourn, player ):
         player.record.append([])
         transfer( player, 1000 )
         save_account_to_db( player )
-    return load_account_from_db( player.username )
+    return load_account_from_db( player.username ), is_new_tournament
 
 
 ######### Betting functions
