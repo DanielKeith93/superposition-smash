@@ -159,12 +159,14 @@ def live_tournament_details( user_name, tournament_name ):
     if "submit_button" in request.form:
         if request.form['submit_button']=="active":
             if kwargs['user_name'] not in kwargs['tournament'].active_participants:
+                account = check_if_new_tournament( kwargs['tournament'], account )
                 kwargs['tournament'].active_participants.append( kwargs['user_name'] )
             if kwargs['user_name'] in kwargs['tournament'].passive_participants:
                 kwargs['tournament'].passive_participants.remove( kwargs['user_name'] )
 
         elif request.form['submit_button']=="passive":
             if kwargs['user_name'] not in kwargs['tournament'].passive_participants:
+                account = check_if_new_tournament( kwargs['tournament'], account )
                 kwargs['tournament'].passive_participants.append( kwargs['user_name'] )
             if kwargs['user_name'] in kwargs['tournament'].active_participants:
                 kwargs['tournament'].active_participants.remove( kwargs['user_name'] )
@@ -794,9 +796,6 @@ def enter_match( tournament, winner, loser, mov, bet_txt="" ):
 
     new_p1 = p1 + mov * corr_m * k * (1 - exp_p1)        #assigning new rating values
     new_p2 = p2 + mov * corr_m * k * ( -exp_p2 )
-    
-    check_if_new_tournament( tournament, winner )
-    check_if_new_tournament( tournament, loser )
 
     winner.rating = new_p1
     winner.rating_history[-1].append(new_p1)
@@ -872,7 +871,7 @@ def get_active_players( tournament ):
 def check_if_new_tournament( tourn, player ):
     if player.tournaments==[]:
         is_new_tournament = True
-    elif player.tournaments[-1]!=tourn.name:
+    elif tourn.name not in player.tournaments:
         is_new_tournament = True
     else:
         is_new_tournament = False 
@@ -882,7 +881,9 @@ def check_if_new_tournament( tourn, player ):
         player.handicap_history.append([])
         player.rating_history.append([])
         player.record.append([])
-    return player
+        transfer( player, 1000 )
+        save_account_to_db( player )
+    return load_account_from_db( player.username )
 
 
 ######### Betting functions
@@ -935,18 +936,16 @@ def enter_bets( winner, loser, bet_txt ):
 
 #Either give money to bank, or take from bank and give it to account
 def transfer( player, amount ):
-    player = load_account_from_db( player )
     if cap_name(player.username)=='Bank':
-        bank = load_account_from_db( 'Bank' )
+        bank = load_account_from_db( 'bank' )
         bank.coin = round( float(amount), 2 ) + round( float(bank.coin), 2 )
         bank.coin_history[-1].append(bank.coin)
         save_account_to_db( bank )
     else:
-        bank = load_account_from_db( 'Bank' )
+        bank = load_account_from_db( 'bank' )
         player.coin = round( float(amount), 2) + round( float(player.coin), 2 )
         bank.coin = -round( float(amount), 2) + round( float(bank.coin), 2 )
         player.coin_history[-1].append(player.coin)
-        bank.coin_history[-1].append(bank.coin)
         save_account_to_db( player )
         save_account_to_db( bank )
 
