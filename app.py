@@ -286,12 +286,12 @@ def previous_tournament_details( user_name, tournament_name ):
 
     tb_txt = ""
     tb = kwargs['tournament'].tournament_bets
-    name_set = set([ x[0] for x in tb ])
+    name_set = set([ x[1] for x in tb ])
     for n in name_set:
         tb_txt += f'To win: <strong>{cap_name(n)}</strong><br>Bets:<br>'
         for x in tb:
-            if x[0]==n:
-                tb_txt += f'    - {cap_name(x[1])}: {float(x[2]):.2f}<br>'
+            if x[1]==n:
+                tb_txt += f'    - {cap_name(x[0])}: {float(x[2]):.2f}<br>'
         tb_txt += '<br>' 
 
     mb_txt = ""
@@ -301,7 +301,10 @@ def previous_tournament_details( user_name, tournament_name ):
         mb_txt += f"Match: <strong>{cap_name(m[0])} def {cap_name(m[1])} (MOV: {m[2]})</strong><br>Bets:<br>"
         if mb:
             for b in mb[idx]:
-                mb_txt += f'    - {cap_name(b[0])} ({cap_name(b[1])}): {float(b[2]):.2f}<br>'
+                if b[2]=='all':
+                    mb_txt += f'    - {cap_name(b[0])} ({cap_name(b[1])}): All in<br>'
+                else:
+                    mb_txt += f'    - {cap_name(b[0])} ({cap_name(b[1])}): {float(b[2]):.2f}<br>'
         mb_txt += '<br>'
 
     kwargs['tournament_bet_txt'] = tb_txt
