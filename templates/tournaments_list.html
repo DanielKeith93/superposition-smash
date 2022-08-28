@@ -14,10 +14,12 @@
     <hr>
     <h2>Live</h2>
 
-    <form action="" method="post" style="visibility:{{ visibility }}">
+    <div style="visibility:{{ visibility }}">
+    <form action="" method="post">
       Create new: <input type="text" name="new_tournament_name">
       <input type="submit" name="create" value="Create">
     </form>
+    </div>
 
     {% for tourn in live_tourns %}
       <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tourn.name) }}">

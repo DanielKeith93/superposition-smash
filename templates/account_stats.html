@@ -80,13 +80,16 @@
           <button type="submit">Tournaments</button>
         </form>
         <hr>
-        <h2>Change password</h2>
-        DO NOT use your normal password! Security is not guaranteed.
-        <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}" style="visibility:{{ visibility }}">
-          Old password: <input type="password" name="old_password"> <br><br>
-          New password: <input type="password" name="new_password"> <br>
-          <input type="submit" name="change_password" value="Change">
-        </form>
+
+        <div style="visibility:{{ visibility }}">
+          <h2>Change password</h2>
+          DO NOT use your normal password! Security is not guaranteed.
+          <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
+            Old password: <input type="password" name="old_password"> <br><br>
+            New password: <input type="password" name="new_password"> <br>
+            <input type="submit" name="change_password" value="Change">
+          </form>
+        </div>
         <hr>
         <form method="post" action="/logout">
           <button type="submit" onclick="confirm_logout(event)">Logout</button>
@@ -99,10 +102,13 @@
             }
             </script>
         </form>
-        <form method="post" action="{{ url_for('manage_accounts', user_name=user_name) }}" style="visibility:{{ visibility }}">
+
+        <div style="visibility:{{ visibility }}">
+        <form method="post" action="{{ url_for('manage_accounts', user_name=user_name) }}">
           <button type="submit">Manage accounts</button>
         </form>
         <br><br>
+        </div>
         
       </div>
     </div>
