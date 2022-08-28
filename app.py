@@ -200,6 +200,19 @@ def live_tournament_details( user_name, tournament_name ):
                 kwargs['debug_message'] = f'Gained 1 reward'
                 account = redeem( account )
 
+        elif request.form['submit_button']=='tournament_bet':
+            bet_target = request.form.get("tourn_bet_target", "")
+            if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
+                if bet_target:
+                    if request.form['tourn_bet_amount'] and isfloat(request.form['tourn_bet_amount']):
+                        kwargs['debug_message'], kwargs['tournament'], account = make_tournament_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['tourn_bet_amount'] )
+                    else:
+                        kwargs['debug_message'] = 'Specify tournament bet amount!'
+                else:
+                    kwargs['debug_message'] = 'Specify tournament bet target!'
+            else:
+                kwargs['debug_message'] = 'Please join as spectator first!'
+
     kwargs['personal_rating'] = f'{account.rating:.0f}'
     kwargs['personal_handicap'] = account.handicap
     kwargs['personal_coin'] = f'{account.coin:.2f}'
@@ -238,15 +251,23 @@ def live_tournament_details( user_name, tournament_name ):
     #decide what is to be shown in the live tournament template
     kwargs['admin_visibility'] = "hidden"
     kwargs['close_visibility'] = "hidden"
+    kwargs['tourn_visibility'] = "hidden"
     if account.isadmin:
         kwargs['admin_visibility'] = "visible"
         if kwargs['tournament'].winner:
             kwargs['close_visibility'] = "visible"
             kwargs['admin_visibility'] = "hidden"
+    if kwargs['tournament'].DET:
+        kwargs['tourn_visibility'] = "visible"
 
     kwargs['tournament_log'] = []
     if kwargs['tournament'].log:
         kwargs['tournament_log'] = kwargs['tournament'].log.split('\n')
+
+    kwargs['tournament_bets'] = []
+    if kwargs['tournament'].tournament_bets:
+        for tb in kwargs['tournament'].tournament_bets:
+            kwargs['tournament_bets'].append( f'{cap_name(tb[0])} ({cap_name(tb[1])}): {tb[2]:.2f}' )
 
     return render_template('live_tournament_details.html', **kwargs)
 
@@ -981,6 +1002,40 @@ def redeem( account ):
     account.rewards+=1
     save_account_to_db( account )
     return account
+
+#Enter a new tournament bet
+def make_tournament_bet( tourn, bet_maker, bet_target, bet_amount ):
+    err_txt = ""
+
+    bet_amount = round( float(bet_amount), 2 )
+    existing_tbets = tourn.tournament_bets
+    bet_target_set = set([ t[1] for t in existing_tbets if t[0]==bet_maker.username ])
+    players_existing_tbets = len( bet_target_set )
+    t_odds = tourn.initial_odds
+
+    if bet_amount<=500:
+        if players_existing_tbets<3 or bet_target.lower() in bet_target_set:
+            if round( bet_maker.coin, 2)>=bet_amount:
+                tourn.tournament_bets.append( [ bet_maker.username, bet_target.lower(), bet_amount, t_odds[bet_target] ] )
+                tourn.log += f'tournament_bet( SSBU, \'{cap_name(bet_maker.username)}\', \'{cap_name(bet_target)}\', {bet_amount:.2f}, {t_odds[bet_target]:.2f} )\n'
+                transfer( bet_maker, -bet_amount )
+                bet_maker = load_account_from_db( bet_maker.username )
+                err_txt = f'Tournament bet placed'
+                for target in bet_target_set:
+                    s = sum( [ t[2] for t in existing_tbets if t[0]==bet_maker.username and t[1]==target.lower() ] )
+                    if round( s, 2 )==0:
+                        tourn.tournament_bets = [ tb for tb in tourn.tournament_bets if tb[0]!=bet_maker.username or tb[1]!=target.lower() ]
+                        err_txt = f'Tournament bets cancelled ({cap_name(target)})'
+            else:
+                err_txt = f'Insufficient funds ({round( bet_maker.coin, 2)})!'
+        else:
+            err_txt = f'Maximum 3 tournament bets!'
+    else:
+        err_txt = f'Tournament bet must be 500 or less ({bet_amount:.2f})!'
+
+    save_account_to_db( bet_maker )
+
+    return err_txt, tourn, load_account_from_db( bet_maker.username )
 
 
 ######### Handicap functions
