@@ -198,14 +198,14 @@ def live_tournament_details( user_name, tournament_name ):
                 kwargs['debug_message'] = f'Insufficient funds to redeem ({account.coin:.2f})!'
             else:
                 kwargs['debug_message'] = f'Gained 1 reward'
-                account = redeem( account )
+                redeem( account )
 
         elif request.form['submit_button']=='tournament_bet':
             bet_target = request.form.get("tourn_bet_target", "")
             if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
                 if bet_target:
                     if request.form['tourn_bet_amount'] and isfloat(request.form['tourn_bet_amount']):
-                        kwargs['debug_message'], kwargs['tournament'], account = make_tournament_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['tourn_bet_amount'] )
+                        kwargs['debug_message'], kwargs['tournament'] = make_tournament_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['tourn_bet_amount'] )
                     else:
                         kwargs['debug_message'] = 'Specify tournament bet amount!'
                 else:
@@ -213,6 +213,7 @@ def live_tournament_details( user_name, tournament_name ):
             else:
                 kwargs['debug_message'] = 'Please join as spectator first!'
 
+    account = load_account_from_db( user_name )
     kwargs['personal_rating'] = f'{account.rating:.0f}'
     kwargs['personal_handicap'] = account.handicap
     kwargs['personal_coin'] = f'{account.coin:.2f}'
@@ -869,6 +870,9 @@ def enter_match( tournament, winner, loser, mov, bet_txt="" ):
                 winner.tournament_wins += 1
                 tournament.winner = cap_name(winner.username)
                 tournament.log += f'tourn_win( SSBU, \'{tournament.winner}\')\n'
+                save_account_to_db( winner )
+                save_account_to_db( loser )
+                payout_tournament_bets( tournament )
 
     tournament.DET = det
 
@@ -1001,7 +1005,7 @@ def redeem( account ):
     account.coin-=3000
     account.rewards+=1
     save_account_to_db( account )
-    return account
+    return
 
 #Enter a new tournament bet
 def make_tournament_bet( tourn, bet_maker, bet_target, bet_amount ):
@@ -1035,7 +1039,17 @@ def make_tournament_bet( tourn, bet_maker, bet_target, bet_amount ):
 
     save_account_to_db( bet_maker )
 
-    return err_txt, tourn, load_account_from_db( bet_maker.username )
+    return err_txt, tourn
+
+#AT the end of a tournament give the winning bets their payout
+def payout_tournament_bets( tournament ):
+    tbets = tournament.tournament_bets
+    winner = tournament.winner.lower()
+    for tb in tbets:
+        if tb[1]==winner:
+            winnings = round( tb[2]*tb[3], 2 )
+            better = load_account_from_db( tb[0] )
+            transfer( better, winnings )
 
 
 ######### Handicap functions
