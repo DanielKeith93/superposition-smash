@@ -418,6 +418,7 @@ def manage_accounts( user_name ):
     show = request.form.get("show", "")
 
     new_account_name = request.form.get("new_account_name", "")
+    deposit_amount = request.form.get("deposit_amount", "")
 
     if "submit_button" in request.form:
         if request.form['submit_button']=="update":
@@ -462,8 +463,20 @@ def manage_accounts( user_name ):
                 del_tournament_from_db( tournament_to_delete )
                 kwargs['debug_message'] = f'Tournament successfully deleted: {account_to_delete}'
 
+        elif request.form['submit_button']=="deposit":
+            if deposit_amount and isfloat( deposit_amount ):
+                deposit_amount = round( float( deposit_amount ), 2 )
+                bank = load_account_from_db( 'bank' )
+                transfer( bank, deposit_amount )
+                kwargs['debug_message'] = f'Deposited {deposit_amount} to bank'
+            else:
+                kwargs['debug_message'] = f'Specify amount to deposit!'
+
     kwargs['account_list'] = get_account_list_in_db()
     kwargs['tournament_list'] = [t.name for t in get_all_live_tournaments_in_db() + get_all_previous_tournaments_in_db()]
+
+    bank = load_account_from_db( 'bank' )
+    kwargs['bank_total'] = f'{bank.coin:.2f}'
 
     return render_template('manage_accounts.html', **kwargs )
 
@@ -951,9 +964,8 @@ def enter_bets( winner, loser, bet_txt ):
 #Either give money to bank, or take from bank and give it to account
 def transfer( player, amount ):
     if cap_name(player.username)=='Bank':
-        bank = load_account_from_db( 'bank' )
+        bank = player
         bank.coin = round( float(amount), 2 ) + round( float(bank.coin), 2 )
-        bank.coin_history[-1].append(bank.coin)
         save_account_to_db( bank )
     else:
         bank = load_account_from_db( 'bank' )
