@@ -91,7 +91,7 @@
           </form>
         </div>
         <hr>
-        <form method="post" action="/logout">
+        <form method="post" action="{{ url_for('logout', user_name=user_name) }}">
           <button type="submit" onclick="confirm_logout(event)">Logout</button>
           <script>
             function confirm_logout(e)

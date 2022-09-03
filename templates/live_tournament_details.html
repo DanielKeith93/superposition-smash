@@ -156,7 +156,7 @@
               <option value="{{player}}">{{player}}</option>"
             {% endfor %}
           </select><br>
-          - Bet amount: <input type="text" name="tourn_bet_amount"><br>
+          - Bet amount: <input type="text" name="tourn_bet_amount" id="tourn_bet_amount"><br>
           <button type="submit" name="submit_button" value="tournament_bet" onclick="confirm_tournbet(event)">Place bet</button>
           <script>
           function confirm_tournbet(e)
@@ -216,27 +216,64 @@
     <hr>
 
     <div style="visibility:{{ tourn_visibility }}">
-    <h2>Active Matches</h2>
 
+    <div class="row">
+      <div class="column23">
+        <h2>Active Matches</h2>
+      </div>
+      <div class="column3">
+        <h2>Match Bets</h2>
+        <form action="" method="post">
+          Place match bet: <br>
+          - To win: <select name="match_bet_target" id="match_bet_target">
+            <option disabled selected value> -- select -- </option>
+            {% for player in active_players %}
+              <option value="{{player}}">{{player}}</option>"
+            {% endfor %}
+          </select><br>
+          - Bet amount: <input type="text" name="match_bet_amount" id="match_bet_amount"><br>
+          <button type="submit" name="submit_button" value="match_bet" onclick="confirm_matchbet(event)">Place bet</button>
+          <script>
+          function confirm_matchbet(e)
+          {
+            name = document.getElementById('match_bet_target').value
+            bet = document.getElementById('match_bet_amount').value
+              if(!confirm('Confirm match bet: ' + name + ' (' + bet + ')?')) {
+                  e.preventDefault();
+              }
+          }
+          </script>
+        </form>
+      </div>
+    </div>
+
+    <div class="row" style='width:100%'>
     {% for active_match in active_match_txts %}
       {% autoescape false %}
       <div class="row" style='width:100%'>
         {{ active_match }}
       </div>
-      <div class="row" style='width:100%'>
-        <div class="col border-right" style="text-align:right;width:calc( 25% - 37.5px )">
-          {{ stats[loop.index0] }}
+      <div class="column23">
+        <div class="row" style='width:100%'>
+          <div class="col border-right" style="text-align:right;width:calc( 25% - 37.5px )">
+            {{ stats[loop.index0] }}
+          </div>
+          <div class="col border-right" style="text-align:center;width:150px">
+            {{ left_txts[loop.index0] }}
+          </div>
+          <div class="col" style="text-align:center;width:150px" >
+            {{ right_txts[loop.index0] }}
+          </div>
         </div>
-        <div class="col border-right" style="text-align:center;width:150px">
-          {{ left_txts[loop.index0] }}
-        </div>
-        <div class="col" style="text-align:center;width:150px" >
-          {{ right_txts[loop.index0] }}
-          {% endautoescape %}
-        </div>
+      </div>
+      <div class="column3">
+        {{ match_bet_txts[loop.index0] }}
+        {% endautoescape %}
       </div>
       <br>
     {% endfor %}
+    </div>
+
     </div>
 
     <hr>

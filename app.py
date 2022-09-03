@@ -107,12 +107,16 @@ def favicon():
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
+    if 'user_names' not in session:
+        session['user_names'] = []
     user_name = request.form.get("user_name", "").lower()
     password = request.form.get("password", "")
     if user_name and password:
         txt = login_account( user_name, password )
         if txt=='Login successful':
-            session['user_name'] = user_name
+            if user_name not in session['user_names']:
+                session['user_names'].append(user_name)
+                session.modified = True
             return account_stats( user_name )
         else:
             return render_template('index.html', debug_message=txt )
@@ -123,7 +127,9 @@ def index():
 @app.route("/<user_name>/tournaments_list", methods=['GET', 'POST'])
 def tournaments_list( user_name ):
 
-    check_if_logged_in( user_name )
+    x = check_if_logged_in( user_name )
+    if x=='redirect':
+        return redirect(url_for('index'))
 
     kwargs = dict()
     kwargs['user_name'] = user_name
@@ -149,7 +155,9 @@ def tournaments_list( user_name ):
 @app.route("/<user_name>/<tournament_name>/live", methods=['GET', 'POST'])
 def live_tournament_details( user_name, tournament_name ):
 
-    check_if_logged_in( user_name )
+    x = check_if_logged_in( user_name )
+    if x=='redirect':
+        return redirect(url_for('index'))
 
     kwargs = dict()
     kwargs['user_name'] = user_name
@@ -213,6 +221,19 @@ def live_tournament_details( user_name, tournament_name ):
             else:
                 kwargs['debug_message'] = 'Please join as spectator first!'
 
+        elif request.form['submit_button']=='match_bet':
+            bet_target = request.form.get("match_bet_target", "")
+            if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
+                if bet_target:
+                    if request.form['match_bet_amount'] and isfloat(request.form['match_bet_amount']):
+                        kwargs['debug_message'], kwargs['tournament'] = make_match_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['match_bet_amount'] )
+                    else:
+                        kwargs['debug_message'] = 'Specify match bet amount!'
+                else:
+                    kwargs['debug_message'] = 'Specify match bet target!'
+            else:
+                kwargs['debug_message'] = 'Please join as spectator first!'
+
     account = load_account_from_db( user_name )
     kwargs['personal_rating'] = f'{account.rating:.0f}'
     kwargs['personal_handicap'] = account.handicap
@@ -232,15 +253,16 @@ def live_tournament_details( user_name, tournament_name ):
         kwargs['tournament'] = update_bracket( kwargs['tournament'] )
         kwargs['winners_bracket_txt'], kwargs['losers_bracket_txt'] = kwargs['tournament'].bracket[0], kwargs['tournament'].bracket[1]
 
-    kwargs['active_match_txts'], kwargs['stats'], kwargs['left_txts'], kwargs['right_txts'] = [""], [""], [""], [""]
+    kwargs['active_match_txts'], kwargs['stats'], kwargs['left_txts'], kwargs['right_txts'], kwargs['match_bet_txts'] = [""], [""], [""], [""], [""]
     kwargs['active_players'] = []
     if kwargs['tournament'].DET is not None:
         kwargs['active_players'] = get_active_players( kwargs['tournament'] )
-        txts, stats, left_txts, right_txts = get_active_matches_and_stats( kwargs['tournament'] )
+        txts, stats, left_txts, right_txts, match_bet_txts = get_active_matches_and_stats( kwargs['tournament'] )
         kwargs['active_match_txts'] = txts
         kwargs['stats'] = stats
         kwargs['left_txts'] = left_txts
         kwargs['right_txts'] = right_txts
+        kwargs['match_bet_txts'] = match_bet_txts
 
     kwargs['seed'] = kwargs['tournament'].seed
 
@@ -276,7 +298,9 @@ def live_tournament_details( user_name, tournament_name ):
 @app.route("/<user_name>/<tournament_name>/previous", methods=['GET', 'POST'])
 def previous_tournament_details( user_name, tournament_name ):
 
-    check_if_logged_in( user_name )
+    x = check_if_logged_in( user_name )
+    if x=='redirect':
+        return redirect(url_for('index'))
 
     kwargs = dict()
     kwargs['user_name'] = user_name
@@ -327,16 +351,20 @@ def previous_tournament_details( user_name, tournament_name ):
     return render_template('previous_tournament_details.html', **kwargs)
 
 #Remove the user account from the session and logout
-@app.route('/logout', methods=['GET', 'POST'])
-def logout():
-   # remove the username from the session if it is there
-   session.pop('user_name', None)
-   return redirect(url_for('index'))
+@app.route('/<user_name>/logout', methods=['GET', 'POST'])
+def logout( user_name ):
+    # remove the username from the session if it is there
+    if user_name in session['user_names']:
+        session['user_names'].remove(user_name)
+        session.modified = True
+    return redirect(url_for('index'))
 
 @app.route("/<user_name>", methods=['GET', 'POST'])
 def account_stats( user_name ):
 
-    check_if_logged_in( user_name )
+    x = check_if_logged_in( user_name )
+    if x=='redirect':
+        return redirect(url_for('index'))
 
     kwargs = dict()
     kwargs['debug_message']=''
@@ -420,7 +448,9 @@ def account_stats( user_name ):
 @app.route("/<user_name>/manage_accounts", methods=['GET', 'POST'])
 def manage_accounts( user_name ):
 
-    check_if_logged_in( user_name )
+    x = check_if_logged_in( user_name )
+    if x=='redirect':
+        return redirect(url_for('index'))
 
     kwargs = dict()
     kwargs['user_name'] = user_name
@@ -509,10 +539,12 @@ def manage_accounts( user_name ):
 ####### Account and login functions
 #check the session to see if the user has logged in
 def check_if_logged_in( user_name ):
-    if 'user_name' not in session:
-        return redirect(url_for('index'))
-    elif session['user_name'] != user_name:
-        return redirect(url_for('index'))
+    if 'user_names' not in session:
+        session['user_names'] = []
+        return 'redirect' #redirect(url_for('index'))
+    elif user_name not in session['user_names']:
+        return 'redirect' #redirect(url_for('index'))
+    return None
 
 #create a new account
 def create_account_in_db( username, password ):
@@ -775,12 +807,26 @@ def get_active_matches_and_stats( tournament ):
     stats = []
     left_txts = []
     right_txts = []
+    match_bet_txts = []
     for m in active_matches:
         player1 = load_account_from_db( player_dict[m.get_participants()[0].get_competitor()].lower() )
         player2 = load_account_from_db( player_dict[m.get_participants()[1].get_competitor()].lower() )
         if [ cap_name(player1.username) ,cap_name(player2.username), None ] not in tournament.matches:
             tournament.matches.append( [ cap_name(player1.username) ,cap_name(player2.username), None ] )
+            tournament.match_bets.append( [] ) #empty list to add match bets to later, should have same index as the corresponding matches list
         txts.append( f"<strong>{cap_name(player1.username)}</strong> vs <strong>{cap_name(player2.username)}</strong><br>" )
+
+        match_idx = None
+        for i, match in enumerate(tournament.matches):
+            if cap_name(player1.username) in match and cap_name(player2.username) in match and match[2]==None:
+                match_idx = i
+        if match_idx is not None:
+            match_bets = tournament.match_bets[match_idx]
+            txt = ""
+            for mb in match_bets:
+                txt += f'{cap_name(mb[0])} ({cap_name(mb[1])}): {mb[2]:.2f}<br>'
+        else:
+            txt = ""
 
         h1 = player1.handicap
         h2 = player2.handicap
@@ -818,14 +864,16 @@ def get_active_matches_and_stats( tournament ):
         stats.append( 'Name:&nbsp<br>Handicap:&nbsp<br>Odds:&nbsp<br>Games:&nbsp<br>Tournament Wins:&nbsp<br>Wins:&nbsp<br>Win Percentage:&nbsp<br>Recent Performance:&nbsp<br>Games Against:&nbsp<br>Wins Against:&nbsp<br>Win Percentage Against:&nbsp<br>Recent Results Against:&nbsp' )
         left_txts.append( '{}<br>{}%<br>{}<br>{}<br>{}<br>{}<br>{:.2f}%<br>{}<br>{}<br>{}<br>{:.2f}%<br>{}'.format( cap_name(player1.username), h1, o1, g1, t1, w1, p1, r1, ga1, wa1, wp1, m1 ) )
         right_txts.append( '{}<br>{}%<br>{}<br>{}<br>{}<br>{}<br>{:.2f}%<br>{}<br>{}<br>{}<br>{:.2f}%<br>{}'.format( cap_name(player2.username), h2, o2, g2, t2, w2, p2, r2, ga2, wa2, wp2, m2 ) )
+        match_bet_txts.append( txt )
 
     if tourn.get_winners():
         txts.append( f'{ player_dict[tourn.get_winners()[0]] } won the tournament!' )
         stats.append( "" )
         left_txts.append( "" )
         right_txts.append( "" )
+        match_bet_txts.append( "" )
     
-    return txts, stats, left_txts, right_txts
+    return txts, stats, left_txts, right_txts, match_bet_txts
 
 #Enter new results to progress the tournament
 def enter_match( tournament, winner, loser, mov, bet_txt="" ):
@@ -872,6 +920,7 @@ def enter_match( tournament, winner, loser, mov, bet_txt="" ):
             
             #update matches attribute with the result
             for i, m in enumerate(tournament.matches):
+                #only one result should match this condition
                 if m==[ cap_name(winner.username) ,cap_name(loser.username), None ] or m==[ cap_name(loser.username) ,cap_name(winner.username), None ]:
                     tournament.matches[i] = [ cap_name(winner.username) ,cap_name(loser.username), mov ]
 
@@ -1060,6 +1109,66 @@ def payout_tournament_bets( tournament ):
             winnings = round( tb[2]*tb[3], 2 )
             better = load_account_from_db( tb[0] )
             transfer( better, winnings )
+
+#Enter a new match bet
+def make_match_bet( tourn, bet_maker, bet_target, bet_amount ):
+    err_txt = ""
+
+    bet_amount = round( float(bet_amount), 2 )
+    for i, m in enumerate(tourn.matches):
+        if bet_target in m and m[2]==None:
+            match_idx = i
+            if bet_target==m[0]:
+                bet_opponent = load_account_from_db( m[1] )
+            else:
+                bet_opponent = load_account_from_db( m[0] )
+
+    existing_mbets = tourn.match_bets[match_idx]
+    players_existing_mbets = [ t for t in existing_mbets if t[0]==bet_maker.username ]
+    bet_target_account = load_account_from_db( bet_target )
+    m_winrate = exp_winrate( bet_target_account, bet_opponent )
+    m_odds = round( 1 / m_winrate, 2 )
+
+    if bet_opponent.username!=bet_maker.username:
+        proceed=False
+        if not players_existing_mbets:
+            proceed=True
+        elif players_existing_mbets[0][1]==bet_target.lower():
+            proceed=True
+        if proceed:
+            if bet_amount<=1000:
+                if round( bet_maker.coin, 2)>=bet_amount:
+                    if players_existing_mbets and sum([mb[2] for mb in players_existing_mbets])+bet_amount==0:
+                        tourn.match_bets[match_idx] = [ mb for mb in tourn.match_bets[match_idx] if mb[0]!=bet_maker.username or mb[1]!=bet_target.lower() ]
+                        transfer( bet_maker, -bet_amount )
+                        err_txt = f'Match bets cancelled ({cap_name(bet_target)})'
+                    else:
+                        print(tourn.DET.get_active_matches(), tourn.DET.get_matches())
+                        if tourn.DET.get_active_matches()[-1] in tourn.DET.get_matches()[-2:]:
+                            for tb in tourn.tournament_bets:
+                                print(tb)
+                                print(bet_maker.username, bet_target.lower(), bet_opponent.username)
+                                if tb[0]==bet_maker.username and tb[1] in [bet_target.lower, bet_opponent.username]:
+                                    proceed=False
+                        if proceed:
+                            tourn.match_bets[match_idx].append( [ bet_maker.username, bet_target.lower(), bet_amount, m_odds ] )
+                            transfer( bet_maker, -bet_amount )
+                            bet_maker = load_account_from_db( bet_maker.username )
+                            err_txt = f'Match bet placed'
+                        else:
+                            err_txt = 'You can not bet on a final with an active tournament bet!'
+                else:
+                    err_txt = f'Insufficient funds ({round( bet_maker.coin, 2)})!'
+            else:
+                err_txt = f'Match bet must be 1000 or less ({bet_amount:.2f})!'
+        else:
+            err_txt = f'Can not bet on more than one player in the same match!'
+    else:
+        err_txt = f'Can not bet against yourself!'
+
+    save_account_to_db( bet_maker )
+
+    return err_txt, tourn
 
 
 ######### Handicap functions
