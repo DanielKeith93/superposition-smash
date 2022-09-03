@@ -876,9 +876,16 @@ def get_active_matches_and_stats( tournament ):
     return txts, stats, left_txts, right_txts, match_bet_txts
 
 #Enter new results to progress the tournament
-def enter_match( tournament, winner, loser, mov, bet_txt="" ):
+def enter_match( tournament, winner, loser, mov ):
 
-    winner_bets, loser_bets = enter_bets( winner, loser, bet_txt )
+    for i, m in enumerate(tournament.matches):
+        if cap_name(winner.username) in m and cap_name(loser.username) in m and m[2]==None:
+            match_idx = i
+    mbets = tournament.match_bets[match_idx]
+    print( f'mbets: {mbets}' )
+
+    winner_bets, loser_bets = enter_bets( winner, loser, mbets )
+    print( f'Bet text: {winner_bets}, {loser_bets}' )
     tournament.log += f'match( SSBU, \'{cap_name(winner.username)}\', \'{cap_name(loser.username)}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
 
     k = 32                            #number of points available for each match, how much the rating changes after each game
@@ -998,44 +1005,35 @@ def check_if_new_tournament( tourn, player ):
 
 
 ######### Betting functions
-#enter match bets
-def enter_bets( winner, loser, bet_txt ):
+#enter match bets and passes on the text for logging
+def enter_bets( winner, loser, bets ):
     winner = load_account_from_db( winner.username )
     loser = load_account_from_db( loser.username )
     bank = load_account_from_db( 'bank' )
-    bets = bet_txt.split('<br>')[:-1]
-    bets = [ b.split(' ')[:-1] for b in bets ]
     wb = 'winner_bets={'
     lb = 'loser_bets={'
     err_txt = ""
     
     for b in bets:
-        if b[1][1:-2] == cap_name(winner.username):
-            wb += '\'' + b[0] + '\':'
+        print( f'b: {b}' )
+        if b[1] == winner.username:
+            wb += '\'' + cap_name(b[0]) + '\':'
             player = load_account_from_db( b[0] )
             amount = round(float(b[2]),2)
             wb += str(amount) + ','
 
-            wr = exp_winrate( winner, loser )
-            winnings = round( amount*((1/wr)-1),2 )
-            if player.coin >= amount and bank.coin >= winnings:
-                transfer( player.username, str(winnings), save=False )
-            else:
-                err_txt += f'Insufficient funds for bet: account-{player.username}, amount-{amount:.2f}, winnings-{winnings:.2f}\n'
+            winnings = round( amount*(b[3]-1),2 )
+            transfer( player, str(winnings) )
+            player.bets.append(['match',cap_name(b[1]),amount,b[3],'W',False])
         
-        elif b[1][1:-2] == cap_name(loser.username):
-            lb += '\'' + b[0] + '\':'
+        elif b[1] == loser.username:
+            lb += '\'' + cap_name(b[0]) + '\':'
             player = load_account_from_db( b[0] )
             amount = round(float(b[2]),2)
             lb += str(amount) + ','
 
-            wr = exp_winrate( winner, loser )
-            winnings = round( amount*((1/wr)-1),2 )
-
-            if player.coin >= amount:
-                transfer( player.username, str(-amount), save=False )
-            else:
-                err_txt += f'Insufficient funds for bet: account-{player.username}, amount-{amount:.2f}\n' 
+            transfer( player, str(-amount) )
+            player.bets.append(['match',cap_name(b[1]),amount,b[3],'L',False])
     
     if wb[-1]==',':
         wb = wb[:-1]
@@ -1143,11 +1141,8 @@ def make_match_bet( tourn, bet_maker, bet_target, bet_amount ):
                         transfer( bet_maker, -bet_amount )
                         err_txt = f'Match bets cancelled ({cap_name(bet_target)})'
                     else:
-                        print(tourn.DET.get_active_matches(), tourn.DET.get_matches())
                         if tourn.DET.get_active_matches()[-1] in tourn.DET.get_matches()[-2:]:
                             for tb in tourn.tournament_bets:
-                                print(tb)
-                                print(bet_maker.username, bet_target.lower(), bet_opponent.username)
                                 if tb[0]==bet_maker.username and tb[1] in [bet_target.lower, bet_opponent.username]:
                                     proceed=False
                         if proceed:
