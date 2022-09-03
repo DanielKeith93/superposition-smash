@@ -778,6 +778,8 @@ def get_active_matches_and_stats( tournament ):
     for m in active_matches:
         player1 = load_account_from_db( player_dict[m.get_participants()[0].get_competitor()].lower() )
         player2 = load_account_from_db( player_dict[m.get_participants()[1].get_competitor()].lower() )
+        if [ cap_name(player1.username) ,cap_name(player2.username), None ] not in tournament.matches:
+            tournament.matches.append( [ cap_name(player1.username) ,cap_name(player2.username), None ] )
         txts.append( f"<strong>{cap_name(player1.username)}</strong> vs <strong>{cap_name(player2.username)}</strong><br>" )
 
         h1 = player1.handicap
@@ -867,7 +869,12 @@ def enter_match( tournament, winner, loser, mov, bet_txt="" ):
                             [cap_name(loser.username),cap_name(winner.username)]]
         if competitors in potential_players:
             add_win( det, list(pd.keys())[list(pd.values()).index(cap_name(winner.username))] )
-            tournament.matches.append( [ cap_name(winner.username) ,cap_name(loser.username), mov ] )
+            
+            #update matches attribute with the result
+            for i, m in enumerate(tournament.matches):
+                if m==[ cap_name(winner.username) ,cap_name(loser.username), None ] or m==[ cap_name(loser.username) ,cap_name(winner.username), None ]:
+                    tournament.matches[i] = [ cap_name(winner.username) ,cap_name(loser.username), mov ]
+
             #if end of the tournament -> add tournament win
             if det.get_winners():
                 winner.tournament_wins += 1
