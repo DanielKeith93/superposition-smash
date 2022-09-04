@@ -210,29 +210,58 @@ def live_tournament_details( user_name, tournament_name ):
 
         elif request.form['submit_button']=='tournament_bet':
             bet_target = request.form.get("tourn_bet_target", "")
-            if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
-                if bet_target:
-                    if request.form['tourn_bet_amount'] and isfloat(request.form['tourn_bet_amount']):
-                        kwargs['debug_message'], kwargs['tournament'] = make_tournament_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['tourn_bet_amount'] )
+            #stop tournament betting if a match result has already been entered or closed
+            proceed = True
+            if kwargs['tournament'].matches:
+                for m in kwargs['tournament'].matches:
+                    if m[2] is not None:
+                        proceed = False
+            if proceed:
+                if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
+                    if bet_target:
+                        if request.form['tourn_bet_amount'] and isfloat(request.form['tourn_bet_amount']):
+                            kwargs['debug_message'], kwargs['tournament'] = make_tournament_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['tourn_bet_amount'] )
+                        else:
+                            kwargs['debug_message'] = 'Specify tournament bet amount!'
                     else:
-                        kwargs['debug_message'] = 'Specify tournament bet amount!'
+                        kwargs['debug_message'] = 'Specify tournament bet target!'
                 else:
-                    kwargs['debug_message'] = 'Specify tournament bet target!'
+                    kwargs['debug_message'] = 'Please join as spectator first!'
             else:
-                kwargs['debug_message'] = 'Please join as spectator first!'
+                kwargs['debug_message'] = 'Tournament betting has been closed!'
 
         elif request.form['submit_button']=='match_bet':
             bet_target = request.form.get("match_bet_target", "")
-            if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
-                if bet_target:
-                    if request.form['match_bet_amount'] and isfloat(request.form['match_bet_amount']):
-                        kwargs['debug_message'], kwargs['tournament'] = make_match_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['match_bet_amount'] )
+            proceed = True
+            if kwargs['tournament'].matches:
+                for m in kwargs['tournament'].matches:
+                    if m[2]=='closed':
+                        proceed = False
+            if proceed:
+                if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
+                    if bet_target:
+                        if request.form['match_bet_amount'] and isfloat(request.form['match_bet_amount']):
+                            kwargs['debug_message'], kwargs['tournament'] = make_match_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['match_bet_amount'] )
+                        else:
+                            kwargs['debug_message'] = 'Specify match bet amount!'
                     else:
-                        kwargs['debug_message'] = 'Specify match bet amount!'
+                        kwargs['debug_message'] = 'Specify match bet target!'
                 else:
-                    kwargs['debug_message'] = 'Specify match bet target!'
+                    kwargs['debug_message'] = 'Please join as spectator first!'
             else:
-                kwargs['debug_message'] = 'Please join as spectator first!'
+                kwargs['debug_message'] = 'Betting has been closed for this match!'
+
+        elif request.form['submit_button'][:15]=='close_match_bet':
+            idx = int(request.form['submit_button'].split('_')[-1])
+            m = kwargs['tournament'].DET.get_active_matches()[idx]
+            player_dict = kwargs['tournament'].player_dict
+            zero = cap_name(player_dict[m.get_participants()[0].get_competitor()].lower())
+            one = cap_name(player_dict[m.get_participants()[1].get_competitor()].lower())
+            for i, match in enumerate(kwargs['tournament'].matches):
+                # print( 'test', zero, one, match )
+                if one in match and zero in match and match[2]==None:
+                    kwargs['tournament'].matches[i][2] = 'closed'
+            print('matches', kwargs['tournament'].matches)
 
     account = load_account_from_db( user_name )
     kwargs['personal_rating'] = f'{account.rating:.0f}'
@@ -275,6 +304,7 @@ def live_tournament_details( user_name, tournament_name ):
     kwargs['admin_visibility'] = "hidden"
     kwargs['close_visibility'] = "hidden"
     kwargs['tourn_visibility'] = "hidden"
+    kwargs['tourn_bet_visibility'] = "visible"
     if account.isadmin:
         kwargs['admin_visibility'] = "visible"
         if kwargs['tournament'].winner:
@@ -282,6 +312,10 @@ def live_tournament_details( user_name, tournament_name ):
             kwargs['admin_visibility'] = "hidden"
     if kwargs['tournament'].DET:
         kwargs['tourn_visibility'] = "visible"
+    if kwargs['tournament'].matches:
+        for m in kwargs['tournament'].matches:
+            if m[2] is not None:
+                kwargs['tourn_bet_visibility'] = "hidden"
 
     kwargs['tournament_log'] = []
     if kwargs['tournament'].log:
@@ -811,18 +845,23 @@ def get_active_matches_and_stats( tournament ):
     for m in active_matches:
         player1 = load_account_from_db( player_dict[m.get_participants()[0].get_competitor()].lower() )
         player2 = load_account_from_db( player_dict[m.get_participants()[1].get_competitor()].lower() )
-        if [ cap_name(player1.username) ,cap_name(player2.username), None ] not in tournament.matches:
+        if [ cap_name(player1.username) ,cap_name(player2.username), None ] not in tournament.matches and [ cap_name(player1.username) ,cap_name(player2.username), 'closed' ] not in tournament.matches:
             tournament.matches.append( [ cap_name(player1.username) ,cap_name(player2.username), None ] )
             tournament.match_bets.append( [] ) #empty list to add match bets to later, should have same index as the corresponding matches list
         txts.append( f"<strong>{cap_name(player1.username)}</strong> vs <strong>{cap_name(player2.username)}</strong><br>" )
 
         match_idx = None
         for i, match in enumerate(tournament.matches):
-            if cap_name(player1.username) in match and cap_name(player2.username) in match and match[2]==None:
+            if cap_name(player1.username) in match and cap_name(player2.username) in match and (match[2]==None or match[2]=='closed'):
                 match_idx = i
         if match_idx is not None:
             match_bets = tournament.match_bets[match_idx]
             txt = ""
+            print( 'match_bet', tournament.matches[match_idx] )
+            if tournament.matches[match_idx][2]=='closed':
+                txt += "(Closed)<br>"
+            else:
+                txt += "(Open)<br>"
             for mb in match_bets:
                 txt += f'{cap_name(mb[0])} ({cap_name(mb[1])}): {mb[2]:.2f}<br>'
         else:
