@@ -1152,7 +1152,7 @@ def make_tournament_bet( tourn, bet_maker, bet_target, bet_amount ):
         else:
             err_txt = f'Maximum 3 tournament bets!'
     else:
-        err_txt = f'Tournament bet must be 500 or less ({bet_amount:.2f})!'
+        err_txt = f'Tournament bet must be 500 or less ({sum([ t[2] for t in existing_tbets if t[0]==bet_maker.username and t[1]==bet_target.lower() ])+bet_amount:.2f})!'
 
     save_account_to_db( bet_maker )
 
@@ -1174,7 +1174,7 @@ def make_match_bet( tourn, bet_maker, bet_target, bet_amount ):
 
     bet_amount = round( float(bet_amount), 2 )
     for i, m in enumerate(tourn.matches):
-        if bet_target in m and m[2]==None:
+        if bet_target in m and (m[2]==None or m[2]=='closed'):
             match_idx = i
             if bet_target==m[0]:
                 bet_opponent = load_account_from_db( m[1] )
@@ -1215,7 +1215,7 @@ def make_match_bet( tourn, bet_maker, bet_target, bet_amount ):
                 else:
                     err_txt = f'Insufficient funds ({round( bet_maker.coin, 2)})!'
             else:
-                err_txt = f'Match bet must be 1000 or less ({bet_amount:.2f})!'
+                err_txt = f'Match bet must be 1000 or less ({sum([mb[2] for mb in players_existing_mbets])+bet_amount:.2f})!'
         else:
             err_txt = f'Can not bet on more than one player in the same match!'
     else:
