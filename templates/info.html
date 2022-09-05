@@ -11,14 +11,58 @@
     {{ debug_message }}
     <hr>
 
-    <div style="visibility:{{ visibility }}">
-        <h2>Admin Information</h2>
-
-    </div>
-
     <div>
         <h2>General Information</h2>
 
+    </div>
+
+    <div style="visibility:{{ visibility }}">
+        <h2>Admin Information</h2>
+        <p>Congratulations on becoming an admin of Superposition Smash!</p>
+        <p>It will be outlined here what special abilities you have as an admin, but remeber that with 
+            great power comes great responsibility. This system will only function and be enjoyable if 
+            this role is carried out with other's best interests in mind.</p>
+        <p>As an admin you have two main roles. One is to manage account, and another for creating and
+             running tournaments. Firstly, you can access the "manage accounts" page from your 
+             "account stats" page. On the "manage accounts" page you can: 
+            <ul>
+                <li>Add a new account to the 
+                    database. Make sure the account name is unique and correct as it cannot be changed 
+                    easily (without a full deployment of the web app) afterwards.</li>
+                <li>You can deposit additional funds to the bank. Keep an eye on this value and try to 
+                    make sure it does not go below zero. Going below zero shouldn't be the end of the 
+                    world if it occurs, but may lead to unintended consequences (read: bugs)</li>
+                <li>Delete any account. This can not be undone.</li>
+                <li>Delete any tournament. This can not be undone. Make sure to copy the tournament 
+                    log on the "tournament details" page before deleting if you intend to save the 
+                    information</li>
+                <li>Update any attributes of the account information. This is a hard overwrite and 
+                    should only be used as a last resort. It may even be simpler to re-deploy. 
+                    Entries must be of the correct format for a successful update though. Enter all 
+                    the information you require to overwrite in the appropriate fields and then click 
+                    and confirm "update"</li>
+                <li>Update who is an admin. This is the main feature of the update account fields. Enter 
+                    "True" or "False" into the "admin" field to change the admin status of an account. 
+                    Make sure that there is always at least one admin active, and that new admins can be 
+                    responsible.</li>
+            </ul>
+        </p>
+        <p>Secondly you must help create and run tournaments by:
+            <ul>
+                <li>Creating a new tournament in the "tournaments" page. Make sure it has a unique name.</li>
+                <li>Starting the tournament once all competitors and spectators have entered by clicking 
+                    "start tournament". The tournament can be re-started with a matching seed at any time, 
+                    but the seed is optional.</li>
+                <li>Entering the match results as they are completed. Pay careful attention that results 
+                    are not input correctly as they can not be fixed without restarting. Margin of victory 
+                    (MOV) corresponds to the number of lives/games (up to 3) that the victor won by.</li>
+                <li>Close the betting for each individual match once the match begins to ensure users can 
+                    not bet when already knowing the partial result. Betting can not be re-opened after closing.</li>
+                <li>Closing the tournament by clicking "close tournament" in the "join tournament" section. 
+                    Once users go back out the tournament will then be viewable in the previoius tournaments list.</li>
+            </ul>
+        </p>
+        <p>Thank you for helping out!</p>
     </div>
 
   </body>
