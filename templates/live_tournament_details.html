@@ -66,7 +66,7 @@
       <div class="column3">
 
         <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tournament_name ) }}">
-            <strong>Competitors:</strong> <button type="submit" name="submit_button" value="active">Join as active</button><br>
+            <strong>Competitors:</strong> <button type="submit" name="submit_button" value="active">Join as competitor</button><br>
         </form>
         {% for name in active_participants %}
             {{ name }}<br>
@@ -77,7 +77,7 @@
       <div class="column3">
 
         <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tournament_name ) }}">
-            <strong>Spectators:</strong> <button type="submit" name="submit_button" value="passive">Join as passive</button><br>
+            <strong>Spectators:</strong> <button type="submit" name="submit_button" value="passive">Join as spectator</button><br>
         </form>
         {% for name in passive_participants %}
             {{ name }}<br>

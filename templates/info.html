@@ -14,15 +14,71 @@
     <div>
         <h2>General Information</h2>
 
+        <p>Welcome to Superposition Smash!</p>
+        <p>Included here are some some simple instructions so that you can make the most of this 
+            application. If you have any quesions or issues you should first ask other users or admins.</p>
+        <p>First note that if you are using a mobile to access this web app, that you will probably find
+             the experience better in landscape view.</p>
+        <p>When you first logged in you should have first seen your "account details" page. Here you 
+            can find all kinds of statistics on your past performance for you rating, coin, or handicap. 
+            These stats will continue to be updated as you play more tournaments.</p>
+        <p>On the right of your "account details" will be a section to change your password. It is 
+            recommended to do this as soon as possible, but make sure not to use any passwords you use for other 
+            applications as security for this password is minimal and not guaranteed. Simply enter your 
+            old and new password and click "change" to update.</p>
+        <p>You can logout by clicking "logout" on the right side of your "account details". This will 
+            ensure others can not access your account on the same device without entering the correct 
+            password.</p>
+        <p>Click "tournaments" on the right side of your "account details" page to access the list of 
+            all live and previous tournaments.</p>
+        <p>To see more information about any of the listed tournaments you can click on their 
+            corresponding "details" button. This will include information such as the date, winner, 
+            seed (if any), matches, results, tournament and match bets, and a log for the entire 
+            tournament. New tournaments will also have access to the bracket and tournament odds information.</p>
+        <p>The details for a live tournament is more interactive. You can join the tournament as either a 
+            "competitor", or a "spectator". A competitor will be included in the bracket, while a spectator 
+            will not. Both can participate in betting though. Joining as either for the first time for any 
+            given tournament will reward you with 1000 coins.</p>
+        <p>Once an admin starts the tournament you can place tournament bets. The percentage chance of 
+            winning and their respective odds will be shown for each competitor in the bracket. You may 
+            place bets on a total of 3 different people with each individual bet being up to 500 coins. 
+            To cancel a bet, make a new bet on the same user equal to the negative sum of your existing 
+            bets on that person. A message that these bets have been cancelled should appear at the top, 
+            and you will receive your original coin back. Tournament bets will be closed once betting is 
+            closed on the first match by an admin.</p>
+        <p>Until the tournament is completed, at least one match will be active (i.e. available to complete 
+            next) for playing and betting. Match betting will be available for each given active match until 
+            it is closed by an admin. Results will then be updated by an admin, so keep an eye out that they 
+            are doing their job correctly.</p>
+        <p>Match bets can be made on active matches before the betting is closed. Making bets works very 
+            similarly to tournament bets, but the rules are slightly different. For match bets, you can only 
+            bet on one person in a match and the bets can not sum up to more than 1000 coins. You also can 
+            not bet on any finals match if you have an active tournament bet. Match bets can also be cancelled 
+            by entering the negative sum of existing bets.</p>
+        <p>The betting rules have been made in honor of Brandur. They have been proven to work as even Brandur 
+            will testify to.</p>
+        <p>At any point during a live tournament you can "redeem" 3000 coins for a prize. Show the redeem 
+            message to your admin or prize giver to receive the prize.</p>
+        <p>Any user who loses twice in the one tournament will be eliminated. The last user standing will be 
+            decalred the tournament winner.</p>
+        <p>Tournament bets will be paid out once all matches have been completed. Match bets will be paid out 
+            when the results are entered for that match.</p>
+        <p>Once the tournament is complete, an admin will close the tournament and it can then be viewed along 
+            with the other previous tournaments.</p>
+        <p>For further questions or feedback please contact me at danielkeith93@gmail.com</p>
+        <p>Have fun!</p>
+        <p>- Daniel</p>
+
     </div>
 
     <div style="visibility:{{ visibility }}">
         <h2>Admin Information</h2>
         <p>Congratulations on becoming an admin of Superposition Smash!</p>
-        <p>It will be outlined here what special abilities you have as an admin, but remeber that with 
+        <p>It will be outlined here what special abilities you have as an admin, but remember that with 
             great power comes great responsibility. This system will only function and be enjoyable if 
-            this role is carried out with other's best interests in mind.</p>
-        <p>As an admin you have two main roles. One is to manage account, and another for creating and
+            this role is carried out with other's best interests in mind. Make sure to let others 
+            know you are an admin so that you can help them if needed.</p>
+        <p>As an admin you have two main roles. One is to manage accounts, and another for creating and
              running tournaments. Firstly, you can access the "manage accounts" page from your 
              "account stats" page. On the "manage accounts" page you can: 
             <ul>
@@ -31,16 +87,16 @@
                     easily (without a full deployment of the web app) afterwards.</li>
                 <li>You can deposit additional funds to the bank. Keep an eye on this value and try to 
                     make sure it does not go below zero. Going below zero shouldn't be the end of the 
-                    world if it occurs, but may lead to unintended consequences (read: bugs)</li>
+                    world if it occurs, but may lead to unintended consequences (read: bugs).</li>
                 <li>Delete any account. This can not be undone.</li>
                 <li>Delete any tournament. This can not be undone. Make sure to copy the tournament 
                     log on the "tournament details" page before deleting if you intend to save the 
-                    information</li>
+                    information.</li>
                 <li>Update any attributes of the account information. This is a hard overwrite and 
                     should only be used as a last resort. It may even be simpler to re-deploy. 
                     Entries must be of the correct format for a successful update though. Enter all 
                     the information you require to overwrite in the appropriate fields and then click 
-                    and confirm "update"</li>
+                    and confirm "update".</li>
                 <li>Update who is an admin. This is the main feature of the update account fields. Enter 
                     "True" or "False" into the "admin" field to change the admin status of an account. 
                     Make sure that there is always at least one admin active, and that new admins can be 
