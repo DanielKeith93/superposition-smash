@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    
+    <hr>
+    <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
+        <button type="submit">Back</button>
+      </form>
+    {{ debug_message }}
+    <hr>
+
+    <div style="visibility:{{ visibility }}">
+        <h2>Admin Information</h2>
+
+    </div>
+
+    <div>
+        <h2>General Information</h2>
+
+    </div>
+
+  </body>
+</html>

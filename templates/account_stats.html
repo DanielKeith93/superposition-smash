@@ -81,9 +81,9 @@
         </form>
         <hr>
 
-        <div style="visibility:{{ visibility }}">
+        <div>  <!-- style="visibility:{{ visibility }}" -->
           <h2>Change password</h2>
-          DO NOT use your normal password! Security is not guaranteed.
+          DO NOT use a password you already use! Security is not guaranteed.
           <form method="post" action="{{ url_for('account_stats', user_name=user_name) }}">
             Old password: <input type="password" name="old_password"> <br><br>
             New password: <input type="password" name="new_password"> <br>
@@ -91,6 +91,9 @@
           </form>
         </div>
         <hr>
+        <form method="post" action="{{ url_for('info', user_name=user_name) }}">
+          <button type="submit" >Info</button><br>
+        </form>
         <form method="post" action="{{ url_for('logout', user_name=user_name) }}">
           <button type="submit" onclick="confirm_logout(event)">Logout</button>
           <script>

@@ -393,6 +393,27 @@ def logout( user_name ):
         session.modified = True
     return redirect(url_for('index'))
 
+#Printed instructions for users and admins
+@app.route('/<user_name>/info', methods=['GET', 'POST'])
+def info( user_name ):
+
+    x = check_if_logged_in( user_name )
+    if x=='redirect':
+        return redirect(url_for('index'))
+
+    kwargs = dict()
+    kwargs['debug_message']=''
+    account = load_account_from_db( user_name )
+    kwargs['user_name'] = account.username
+
+    #only allow admin specific information if user is admin
+    if account.isadmin:
+        kwargs['visibility']="visible"
+    else:
+        kwargs['visibility']="hidden"
+
+    return render_template('info.html', **kwargs)
+
 @app.route("/<user_name>", methods=['GET', 'POST'])
 def account_stats( user_name ):
 
