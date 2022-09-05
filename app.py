@@ -258,10 +258,8 @@ def live_tournament_details( user_name, tournament_name ):
             zero = cap_name(player_dict[m.get_participants()[0].get_competitor()].lower())
             one = cap_name(player_dict[m.get_participants()[1].get_competitor()].lower())
             for i, match in enumerate(kwargs['tournament'].matches):
-                # print( 'test', zero, one, match )
                 if one in match and zero in match and match[2]==None:
                     kwargs['tournament'].matches[i][2] = 'closed'
-            print('matches', kwargs['tournament'].matches)
 
     account = load_account_from_db( user_name )
     kwargs['personal_rating'] = f'{account.rating:.0f}'
@@ -689,17 +687,21 @@ def rangeBase1(length):
     return [i + 1 for i in range(length)]
 
 def start_tournament( tournament ):
+    print(tournament.seed)
     random.seed(tournament.seed)
     names = tournament.active_participants
     num_players = len(names)
     n = names
+    print(n)
     random.shuffle(n)
+    print(n)
     player_dict = {}
     for i in range(len(names)):
-        player_dict[i+1] = cap_name(n[i])
+        player_dict[i] = cap_name(n[i])
     tournament.player_dict = player_dict
     tournament.DET = DET(rangeBase1(num_players))
     tournament = update_bracket( tournament )
+    print(tournament.player_dict)
     return tournament
 
 # functions to go along with double elimination tournament generator
@@ -878,7 +880,6 @@ def get_active_matches_and_stats( tournament ):
         if match_idx is not None:
             match_bets = tournament.match_bets[match_idx]
             txt = ""
-            print( 'match_bet', tournament.matches[match_idx] )
             if tournament.matches[match_idx][2]=='closed':
                 txt += "(Closed)<br>"
             else:
@@ -942,10 +943,8 @@ def enter_match( tournament, winner, loser, mov ):
         if cap_name(winner.username) in m and cap_name(loser.username) in m and (m[2]==None or m[2]=='closed'):
             match_idx = i
     mbets = tournament.match_bets[match_idx]
-    print( f'mbets: {mbets}' )
 
     winner_bets, loser_bets = enter_bets( winner, loser, mbets )
-    print( f'Bet text: {winner_bets}, {loser_bets}' )
     tournament.log += f'match( SSBU, \'{cap_name(winner.username)}\', \'{cap_name(loser.username)}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
 
     k = 32                            #number of points available for each match, how much the rating changes after each game
@@ -1075,7 +1074,6 @@ def enter_bets( winner, loser, bets ):
     err_txt = ""
     
     for b in bets:
-        print( f'b: {b}' )
         if b[1] == winner.username:
             wb += '\'' + cap_name(b[0]) + '\':'
             player = load_account_from_db( b[0] )
