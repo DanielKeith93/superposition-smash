@@ -253,37 +253,39 @@
     {% for active_match in active_match_txts %}
       {% autoescape false %}
       <div class="row" style='width:100%'>
-        {{ active_match }}
-      </div>
-      <div class="column23">
         <div class="row" style='width:100%'>
-          <div class="col border-right" style="text-align:right;width:calc( 25% - 37.5px )">
-            {{ stats[loop.index0] }}
-          </div>
-          <div class="col border-right" style="text-align:center;width:150px">
-            {{ left_txts[loop.index0] }}
-          </div>
-          <div class="col" style="text-align:center;width:150px" >
-            {{ right_txts[loop.index0] }}
+          {{ active_match }}
+        </div>
+        <div class="column23">
+          <div class="row" style='width:100%'>
+            <div class="col border-right" style="text-align:right;width:calc( 25% - 37.5px )">
+              {{ stats[loop.index0] }}
+            </div>
+            <div class="col border-right" style="text-align:center;width:150px">
+              {{ left_txts[loop.index0] }}
+            </div>
+            <div class="col" style="text-align:center;width:150px" >
+              {{ right_txts[loop.index0] }}
+            </div>
           </div>
         </div>
-      </div>
-      <div class="column3">
-        <div style="visibility:{{ admin_visibility }}">
-          <form action="" method="post">
-            <button type="submit" name="submit_button" value="close_match_bet_{{loop.index0}}" onclick="confirm_closematchbet(event)">Close betting</button>
-            <script>
-            function confirm_closematchbet(e)
-            {
-                if(!confirm('Are you sure you want to close betting for this match?')) {
-                    e.preventDefault();
-                }
-            }
-            </script>
-          </form>
+        <div class="column3">
+          <div style="visibility:{{ admin_visibility }}">
+            <form action="" method="post">
+              <button type="submit" name="submit_button" value="close_match_bet_{{loop.index0}}" onclick="confirm_closematchbet(event)">Close betting</button>
+              <script>
+              function confirm_closematchbet(e)
+              {
+                  if(!confirm('Are you sure you want to close betting for this match?')) {
+                      e.preventDefault();
+                  }
+              }
+              </script>
+            </form>
+          </div>
+          {{ match_bet_txts[loop.index0] }}
+          {% endautoescape %}
         </div>
-        {{ match_bet_txts[loop.index0] }}
-        {% endautoescape %}
       </div>
       <br>
     {% endfor %}

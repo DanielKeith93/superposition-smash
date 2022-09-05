@@ -235,7 +235,7 @@ def live_tournament_details( user_name, tournament_name ):
             proceed = True
             if kwargs['tournament'].matches:
                 for m in kwargs['tournament'].matches:
-                    if m[2]=='closed':
+                    if bet_target.lower() in m and m[2]=='closed':
                         proceed = False
             if proceed:
                 if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
@@ -939,7 +939,7 @@ def get_active_matches_and_stats( tournament ):
 def enter_match( tournament, winner, loser, mov ):
 
     for i, m in enumerate(tournament.matches):
-        if cap_name(winner.username) in m and cap_name(loser.username) in m and m[2]==None:
+        if cap_name(winner.username) in m and cap_name(loser.username) in m and (m[2]==None or m[2]=='closed'):
             match_idx = i
     mbets = tournament.match_bets[match_idx]
     print( f'mbets: {mbets}' )
@@ -1055,9 +1055,9 @@ def check_if_new_tournament( tourn, player ):
         is_new_tournament = False 
     if is_new_tournament:
         player.tournaments.append(tourn.name)
-        player.coin_history.append([])
-        player.handicap_history.append([])
-        player.rating_history.append([])
+        player.coin_history.append([player.coin])
+        player.handicap_history.append([player.handicap])
+        player.rating_history.append([player.rating])
         player.record.append([])
         transfer( player, 1000 )
         save_account_to_db( player )
@@ -1134,7 +1134,7 @@ def make_tournament_bet( tourn, bet_maker, bet_target, bet_amount ):
     players_existing_tbets = len( bet_target_set )
     t_odds = tourn.initial_odds
 
-    if bet_amount<=500:
+    if sum([ t[2] for t in existing_tbets if t[0]==bet_maker.username and t[1]==bet_target.lower() ])+bet_amount<=500:
         if players_existing_tbets<3 or bet_target.lower() in bet_target_set:
             if round( bet_maker.coin, 2)>=bet_amount:
                 tourn.tournament_bets.append( [ bet_maker.username, bet_target.lower(), bet_amount, t_odds[bet_target] ] )
@@ -1194,7 +1194,7 @@ def make_match_bet( tourn, bet_maker, bet_target, bet_amount ):
         elif players_existing_mbets[0][1]==bet_target.lower():
             proceed=True
         if proceed:
-            if bet_amount<=1000:
+            if sum([mb[2] for mb in players_existing_mbets])+bet_amount<=1000:
                 if round( bet_maker.coin, 2)>=bet_amount:
                     if players_existing_mbets and sum([mb[2] for mb in players_existing_mbets])+bet_amount==0:
                         tourn.match_bets[match_idx] = [ mb for mb in tourn.match_bets[match_idx] if mb[0]!=bet_maker.username or mb[1]!=bet_target.lower() ]
