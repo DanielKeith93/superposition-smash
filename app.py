@@ -687,21 +687,18 @@ def rangeBase1(length):
     return [i + 1 for i in range(length)]
 
 def start_tournament( tournament ):
-    print(tournament.seed)
     random.seed(tournament.seed)
     names = tournament.active_participants
+    names.sort()
     num_players = len(names)
     n = names
-    print(n)
     random.shuffle(n)
-    print(n)
     player_dict = {}
     for i in range(len(names)):
-        player_dict[i] = cap_name(n[i])
+        player_dict[i+1] = cap_name(n[i])
     tournament.player_dict = player_dict
     tournament.DET = DET(rangeBase1(num_players))
     tournament = update_bracket( tournament )
-    print(tournament.player_dict)
     return tournament
 
 # functions to go along with double elimination tournament generator
@@ -766,7 +763,6 @@ def update_bracket( tournament ):
             games_order.append(m)
             participants = m.get_participants()
             left, right = participants[0].get_competitor(), participants[1].get_competitor()
-            
             if left in winners_side or right in winners_side:
                 
                 if left==match_winners[games_ref.index(m)] or right==match_winners[games_ref.index(m)]:
