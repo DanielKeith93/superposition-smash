@@ -235,7 +235,8 @@ def live_tournament_details( user_name, tournament_name ):
             proceed = True
             if kwargs['tournament'].matches:
                 for m in kwargs['tournament'].matches:
-                    if bet_target.lower() in m and m[2]=='closed':
+                    print('closed', bet_target, m)
+                    if bet_target in m and m[2]=='closed':
                         proceed = False
             if proceed:
                 if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
@@ -983,7 +984,7 @@ def enter_match( tournament, winner, loser, mov ):
             #update matches attribute with the result
             for i, m in enumerate(tournament.matches):
                 #only one result should match this condition
-                if m==[ cap_name(winner.username) ,cap_name(loser.username), None ] or m==[ cap_name(loser.username) ,cap_name(winner.username), None ]:
+                if m==[ cap_name(winner.username) ,cap_name(loser.username), None ] or m==[ cap_name(loser.username) ,cap_name(winner.username), None ] or m==[ cap_name(winner.username) ,cap_name(loser.username), 'closed' ] or m==[ cap_name(loser.username) ,cap_name(winner.username), 'closed' ]:
                     tournament.matches[i] = [ cap_name(winner.username) ,cap_name(loser.username), mov ]
 
             #if end of the tournament -> add tournament win
