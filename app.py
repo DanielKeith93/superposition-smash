@@ -998,6 +998,8 @@ def enter_match( tournament, winner, loser, mov ):
             match_idx = i
     mbets = tournament.match_bets[match_idx]
     winner_bets, loser_bets = enter_bets( winner, loser, mbets )
+    winner = load_account_from_db( winner.username )
+    loser = load_account_from_db( loser.username )
     tournament.log += f'match( SSBU, \'{cap_name(winner.username)}\', \'{cap_name(loser.username)}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
 
     k = 32                            #number of points available for each match, how much the rating changes after each game
@@ -1028,6 +1030,9 @@ def enter_match( tournament, winner, loser, mov ):
     winner.record[-1].append(['W',cap_name(loser.username)])
     loser.record[-1].append(['L',cap_name(winner.username)])
 
+    save_account_to_db( winner )
+    save_account_to_db( loser )
+
     det = tournament.DET
     pd = tournament.player_dict
     for match in det.get_active_matches():
@@ -1053,9 +1058,6 @@ def enter_match( tournament, winner, loser, mov ):
                 payout_tournament_bets( tournament )
 
     tournament.DET = det
-
-    save_account_to_db( winner )
-    save_account_to_db( loser )
 
     return tournament
 
@@ -1133,9 +1135,9 @@ def enter_bets( winner, loser, bets ):
             amount = round(float(b[2]),2)
             wb += str(amount) + ','
 
-            winnings = round( amount*(b[3]-1),2 )
-            transfer( player, str(winnings) )
+            winnings = round( amount*(b[3]),2 )
             player.bets.append(['match',cap_name(b[1]),amount,b[3],'W',False])
+            transfer( player, str(winnings) )
         
         elif b[1] == loser.username:
             lb += '\'' + cap_name(b[0]) + '\':'
@@ -1143,8 +1145,8 @@ def enter_bets( winner, loser, bets ):
             amount = round(float(b[2]),2)
             lb += str(amount) + ','
 
-            transfer( player, str(-amount) )
             player.bets.append(['match',cap_name(b[1]),amount,b[3],'L',False])
+            save_account_to_db( player )
     
     if wb[-1]==',':
         wb = wb[:-1]
