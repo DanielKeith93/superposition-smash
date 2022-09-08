@@ -47,7 +47,7 @@
       - Coin: {{personal_coin}}<br>
       - Rewards: {{personal_rewards}}<br>
       <form method="post" action="{{ url_for('live_tournament_details', user_name=user_name, tournament_name=tournament_name ) }}">
-        <button type="submit" name="submit_button" value="redeem" onclick="confirm_redeem(event)">Redeem</button>
+        <button type="submit" name="submit_button" value="redeem" onclick="confirm_redeem(event)">Redeem (3000)</button>
         <script>
           function confirm_redeem(e)
           {
