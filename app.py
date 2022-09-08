@@ -169,9 +169,14 @@ def live_tournament_details( user_name, tournament_name ):
     account = load_account_from_db( user_name )
     kwargs['tournament'] = load_tournament_from_db( tournament_name )
     kwargs['tournament_name'] = kwargs['tournament'].name
+    kwargs['debug_message'] = ""
 
-    if "submit_button" in request.form:
-        if request.form['submit_button']=="active":
+    if 'debug_message' in session:
+        kwargs['debug_message'] = session['debug_message']
+
+    form = request.form.to_dict()
+    if "submit_button" in form:
+        if form['submit_button']=="active":
             if kwargs['user_name'] not in kwargs['tournament'].active_participants:
                 account, is_new = check_if_new_tournament( kwargs['tournament'], account )
                 if is_new:
@@ -179,8 +184,11 @@ def live_tournament_details( user_name, tournament_name ):
                 kwargs['tournament'].active_participants.append( kwargs['user_name'] )
             if kwargs['user_name'] in kwargs['tournament'].passive_participants:
                 kwargs['tournament'].passive_participants.remove( kwargs['user_name'] )
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=="passive":
+        elif form['submit_button']=="passive":
             if kwargs['user_name'] not in kwargs['tournament'].passive_participants:
                 account, is_new = check_if_new_tournament( kwargs['tournament'], account )
                 if is_new:
@@ -188,12 +196,15 @@ def live_tournament_details( user_name, tournament_name ):
                 kwargs['tournament'].passive_participants.append( kwargs['user_name'] )
             if kwargs['user_name'] in kwargs['tournament'].active_participants:
                 kwargs['tournament'].active_participants.remove( kwargs['user_name'] )
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=="start_tournament":
+        elif form['submit_button']=="start_tournament":
             if account.isadmin:
                 if len(kwargs['tournament'].active_participants)>1:
-                    if request.form['seed'] and isint(request.form['seed']):
-                        kwargs['tournament'].seed = int(request.form['seed'])
+                    if form['seed'] and isint(form['seed']):
+                        kwargs['tournament'].seed = int(form['seed'])
                     else:
                         kwargs['tournament'].seed = random.randrange(sys.maxsize)
                     kwargs['tournament'] = start_tournament( kwargs['tournament'] )
@@ -202,29 +213,41 @@ def live_tournament_details( user_name, tournament_name ):
                     kwargs['debug_message'] = f"Not enough active participants! ({len(kwargs['tournament'].active_participants)})"
             else:
                 kwargs['debug_message'] = 'Admin required to start tournament!'
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=="new_match_result" and kwargs['tournament'].DET is not None:
+        elif form['submit_button']=="new_match_result" and kwargs['tournament'].DET is not None:
             if account.isadmin:
-                kwargs['debug_message'], kwargs['tournament'] = enter_new_match_result( request.form, kwargs['tournament'] )
+                kwargs['debug_message'], kwargs['tournament'] = enter_new_match_result( form, kwargs['tournament'] )
             else:
                 kwargs['debug_message'] = 'Admin required to enter match result!'
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=="close_tournament":
+        elif form['submit_button']=="close_tournament":
             if account.isadmin:
                 kwargs['tournament'].live = False
             else:
                 kwargs['debug_message'] = 'Admin required to start tournament!'
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=='redeem':
+        elif form['submit_button']=='redeem':
             if account.coin<3000:
                 kwargs['debug_message'] = f'Insufficient funds to redeem ({account.coin:.2f})!'
             else:
                 kwargs['debug_message'] = f'Gained 1 reward'
                 redeem( account )
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=='tournament_bet':
+        elif form['submit_button']=='tournament_bet':
             if kwargs['tournament'].DET is not None:
-                bet_target = request.form.get("tourn_bet_target", "")
+                bet_target = form.get("tourn_bet_target", "")
                 #stop tournament betting if a match result has already been entered or closed
                 proceed = True
                 if kwargs['tournament'].matches:
@@ -234,7 +257,7 @@ def live_tournament_details( user_name, tournament_name ):
                 if proceed:
                     if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
                         if bet_target:
-                            if request.form['tourn_bet_amount'] and isfloat(request.form['tourn_bet_amount']):
+                            if form['tourn_bet_amount'] and isfloat(form['tourn_bet_amount']):
                                 kwargs['debug_message'], kwargs['tournament'] = make_tournament_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['tourn_bet_amount'] )
                             else:
                                 kwargs['debug_message'] = 'Specify tournament bet amount!'
@@ -246,19 +269,21 @@ def live_tournament_details( user_name, tournament_name ):
                     kwargs['debug_message'] = 'Tournament betting has been closed!'
             else:
                 kwargs['debug_message'] = 'Tournament has not started!'
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button']=='match_bet':
-            bet_target = request.form.get("match_bet_target", "")
+        elif form['submit_button']=='match_bet':
+            bet_target = form.get("match_bet_target", "")
             proceed = True
             if kwargs['tournament'].matches:
                 for m in kwargs['tournament'].matches:
-                    print('closed', bet_target, m)
                     if bet_target in m and m[2]=='closed':
                         proceed = False
             if proceed:
                 if account.username in kwargs['tournament'].passive_participants or account.username in kwargs['tournament'].active_participants:
                     if bet_target:
-                        if request.form['match_bet_amount'] and isfloat(request.form['match_bet_amount']):
+                        if form['match_bet_amount'] and isfloat(form['match_bet_amount']):
                             kwargs['debug_message'], kwargs['tournament'] = make_match_bet( tourn=kwargs['tournament'], bet_maker=account, bet_target=bet_target, bet_amount=request.form['match_bet_amount'] )
                         else:
                             kwargs['debug_message'] = 'Specify match bet amount!'
@@ -268,10 +293,13 @@ def live_tournament_details( user_name, tournament_name ):
                     kwargs['debug_message'] = 'Please join as spectator first!'
             else:
                 kwargs['debug_message'] = 'Betting has been closed for this match!'
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
-        elif request.form['submit_button'][:15]=='close_match_bet':
+        elif form['submit_button'][:15]=='close_match_bet':
             if account.isadmin:
-                idx = int(request.form['submit_button'].split('_')[-1])
+                idx = int(form['submit_button'].split('_')[-1])
                 m = kwargs['tournament'].DET.get_active_matches()[idx]
                 player_dict = kwargs['tournament'].player_dict
                 zero = cap_name(player_dict[m.get_participants()[0].get_competitor()].lower())
@@ -281,6 +309,9 @@ def live_tournament_details( user_name, tournament_name ):
                         kwargs['tournament'].matches[i][2] = 'closed'
             else:
                 kwargs['debug_message'] = 'Admin required to start close match bet!'
+            session['debug_message'] = kwargs['debug_message']
+            save_tournament_to_db( kwargs['tournament'] )        
+            return redirect(url_for('live_tournament_details', **kwargs))
 
     account = load_account_from_db( user_name )
     kwargs['personal_rating'] = f'{account.rating:.0f}'
@@ -346,6 +377,8 @@ def live_tournament_details( user_name, tournament_name ):
     if kwargs['tournament'].tournament_bets:
         for tb in kwargs['tournament'].tournament_bets:
             kwargs['tournament_bets'].append( f'{cap_name(tb[0])} ({cap_name(tb[1])}): {tb[2]:.2f}' )
+
+    session['debug_message'] = ""
 
     return render_template('live_tournament_details.html', **kwargs)
 
@@ -964,7 +997,6 @@ def enter_match( tournament, winner, loser, mov ):
         if cap_name(winner.username) in m and cap_name(loser.username) in m and (m[2]==None or m[2]=='closed'):
             match_idx = i
     mbets = tournament.match_bets[match_idx]
-    print( 'mbets', mbets )
     winner_bets, loser_bets = enter_bets( winner, loser, mbets )
     tournament.log += f'match( SSBU, \'{cap_name(winner.username)}\', \'{cap_name(loser.username)}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
 
@@ -1095,9 +1127,6 @@ def enter_bets( winner, loser, bets ):
     err_txt = ""
     
     for b in bets:
-        print('b', b)
-        print( 'winner', winner.username )
-        print( 'loser', loser.username )
         if b[1] == winner.username:
             wb += '\'' + cap_name(b[0]) + '\':'
             player = load_account_from_db( b[0] )
