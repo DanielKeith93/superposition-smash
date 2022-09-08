@@ -964,7 +964,7 @@ def enter_match( tournament, winner, loser, mov ):
         if cap_name(winner.username) in m and cap_name(loser.username) in m and (m[2]==None or m[2]=='closed'):
             match_idx = i
     mbets = tournament.match_bets[match_idx]
-
+    print( 'mbets', mbets )
     winner_bets, loser_bets = enter_bets( winner, loser, mbets )
     tournament.log += f'match( SSBU, \'{cap_name(winner.username)}\', \'{cap_name(loser.username)}\', MOV={mov}, {winner_bets}, {loser_bets} )\n'
 
@@ -1095,6 +1095,9 @@ def enter_bets( winner, loser, bets ):
     err_txt = ""
     
     for b in bets:
+        print('b', b)
+        print( 'winner', winner.username )
+        print( 'loser', loser.username )
         if b[1] == winner.username:
             wb += '\'' + cap_name(b[0]) + '\':'
             player = load_account_from_db( b[0] )
