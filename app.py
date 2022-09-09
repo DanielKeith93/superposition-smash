@@ -573,7 +573,10 @@ def manage_accounts( user_name ):
 
     kwargs = dict()
     kwargs['user_name'] = user_name
-    kwargs['debug_message'] = ''
+    kwargs['debug_message'] = ""
+
+    if 'debug_message' in session:
+        kwargs['debug_message'] = session['debug_message']
 
     account_name = request.form.get("account_name", "")
     account_to_delete = request.form.get("account_to_delete", "")
@@ -600,18 +603,18 @@ def manage_accounts( user_name ):
                 account = load_account_from_db( account_name )
 
                 #Quick and dirty check of the inputs and then update each attribute
-                attributes = [[isadmin,'isadmin',isbool,'Admin must be boolean<br>'], 
-                        [rating,'rating',isfloat,'Rating must be float<br>'],
-                        [rating_history,'rating_history',islist,'Rating history must be list/list of lists of floats<br>'],
-                        [coin,coin,'isfloat','Coin must be float<br>'],
-                        [coin_history,'coin_history',islist,'Coin history must be list/list of lists of floats<br>'],
-                        [rewards,'rewards',isint,'Rewards must be int<br>'],
-                        [tournaments,'tournaments',islist,'Tournaments must be list of strings<br>'],
-                        [tournament_wins,'tournament_wins',isint,'Tournament wins must be int<br>'],
-                        [handicap,'handicap',isint,'Handicap must be int<br>'],
-                        [handicap_history,'handicap_history',islist,'Handicap history must be list/list of lists of ints<br>'],
-                        [record,'record',islist,'Record must be list/list of lists of strings<br>'],
-                        [show,'show',isbool,'Show must be boolean<br>']]
+                attributes = [[isadmin,'isadmin',isbool,'Admin must be boolean'], 
+                        [rating,'rating',isfloat,'Rating must be float'],
+                        [rating_history,'rating_history',islist,'Rating history must be list/list of lists of floats'],
+                        [coin,coin,'isfloat','Coin must be float'],
+                        [coin_history,'coin_history',islist,'Coin history must be list/list of lists of floats'],
+                        [rewards,'rewards',isint,'Rewards must be int'],
+                        [tournaments,'tournaments',islist,'Tournaments must be list of strings'],
+                        [tournament_wins,'tournament_wins',isint,'Tournament wins must be int'],
+                        [handicap,'handicap',isint,'Handicap must be int'],
+                        [handicap_history,'handicap_history',islist,'Handicap history must be list/list of lists of ints'],
+                        [record,'record',islist,'Record must be list/list of lists of strings'],
+                        [show,'show',isbool,'Show must be boolean']]
 
                 for attribute in attributes:
                     if attribute[0]!="":
@@ -621,21 +624,29 @@ def manage_accounts( user_name ):
                             kwargs['debug_message']+=attribute[3]
 
                 save_account_to_db( account )
+                session['debug_message'] = kwargs['debug_message']
+                return redirect(url_for('manage_accounts', **kwargs))
 
         elif request.form['submit_button']=="create":
             if new_account_name:
                 txt = create_account_in_db( new_account_name, password='password' )
                 kwargs['debug_message'] = txt
+                session['debug_message'] = kwargs['debug_message']
+                return redirect(url_for('manage_accounts', **kwargs))
 
         elif request.form['submit_button']=="delete_account":
             if account_to_delete:
                 del_account_from_db( account_to_delete )
                 kwargs['debug_message'] = f'Account successfully deleted: {account_to_delete}'
+                session['debug_message'] = kwargs['debug_message']
+                return redirect(url_for('manage_accounts', **kwargs))
 
         elif request.form['submit_button']=="delete_tournament":
             if tournament_to_delete:
                 del_tournament_from_db( tournament_to_delete )
                 kwargs['debug_message'] = f'Tournament successfully deleted: {account_to_delete}'
+                session['debug_message'] = kwargs['debug_message']
+                return redirect(url_for('manage_accounts', **kwargs))
 
         elif request.form['submit_button']=="deposit":
             if deposit_amount and isfloat( deposit_amount ):
@@ -645,12 +656,16 @@ def manage_accounts( user_name ):
                 kwargs['debug_message'] = f'Deposited {deposit_amount} to bank'
             else:
                 kwargs['debug_message'] = f'Specify amount to deposit!'
+            session['debug_message'] = kwargs['debug_message']
+            return redirect(url_for('manage_accounts', **kwargs))
 
     kwargs['account_list'] = get_account_list_in_db()
     kwargs['tournament_list'] = [t.name for t in get_all_live_tournaments_in_db() + get_all_previous_tournaments_in_db()]
 
     bank = load_account_from_db( 'bank' )
     kwargs['bank_total'] = f'{bank.coin:.2f}'
+
+    session['debug_message'] = ""
 
     return render_template('manage_accounts.html', **kwargs )
 
