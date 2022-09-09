@@ -107,21 +107,29 @@ def favicon():
 
 @app.route("/", methods=['GET', 'POST'])
 def index():
+    kwargs = dict()
+    kwargs['debug_message'] = ""
+    if 'debug_message' in session:
+        kwargs['debug_message'] = session['debug_message']
     if 'user_names' not in session:
         session['user_names'] = []
+
     user_name = request.form.get("user_name", "").lower()
     password = request.form.get("password", "")
     if user_name and password:
         txt = login_account( user_name, password )
+        kwargs['debug_message'] = txt
         if txt=='Login successful':
             if user_name not in session['user_names']:
                 session['user_names'].append(user_name)
                 session.modified = True
-            return account_stats( user_name )
+            return redirect(url_for('account_stats', user_name=user_name))
         else:
-            return render_template('index.html', debug_message=txt )
+            session['debug_message'] = kwargs['debug_message']
+            return redirect(url_for('index'))
     else:
-        return render_template('index.html')
+        session['debug_message'] = ""
+        return render_template('index.html', **kwargs)
 
 #show a list of previous and active touornaments that can be viewed or joined respectively
 @app.route("/<user_name>/tournaments_list", methods=['GET', 'POST'])
