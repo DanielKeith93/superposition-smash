@@ -1311,7 +1311,7 @@ def update_handicap(player):
     
     if ( p1 - 50 ) // 100 != ( p2 - 50 ) // 100:
 
-        if p2 > p1 and p2 > 1550 and ( get_max_history( player ) - 50 ) // 100 < ( p2 - 50 ) // 100:
+        if p2 > p1 and p2 >= 1550 and ( get_max_history( player ) - 50 ) // 100 < ( p2 - 50 ) // 100:
             player.handicap -= ( ( p2 - 50 ) // 100 - max( ( p1 - 50 ) // 100 , 14 ) )
         
         if p2 < p1 and p2 < 1450 and ( get_min_history( player ) - 50 ) // 100 > ( p2 - 50 ) // 100:
@@ -1343,7 +1343,7 @@ def get_max_history( player ):
     thresh = 1450
     ratings = []
     for idx, val in enumerate(y):
-        if val < 1450:
+        if val > 1450:
             ratings.append(val)
         else:
             break
