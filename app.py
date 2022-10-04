@@ -41,6 +41,7 @@ db = SQLAlchemy(app)
 #For database on local memory
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + current_dir + '\\db.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.app_context().push()
 db = SQLAlchemy(app)
 
 class Account_db(db.Model):
@@ -63,6 +64,7 @@ class Tournament_db(db.Model):
         self.name = name
         self.tournament = tournament
 
+# with app.app_context():
 db.create_all()
 
 #return the class object for a given account username

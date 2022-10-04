@@ -7,18 +7,19 @@
     /* Set additional styling options for the columns*/
     .column3 {
     float: left;
-    width: 30%;
+    width: 300px;
     padding: 5px;
     }
     .column23 {
     float: left;
-    width: 60%;
+    width: 600px;
     padding: 5px;
     }
     .row:after {
     content: "";
     display: table;
     clear: both;
+    width:1800px;
     }
     .border-right {
         border-right: 1px solid black;
@@ -26,10 +27,15 @@
     .col {
     float: left;
     }
+    .wrapper {
+    margin-left:auto;
+    margin-right:auto;
+    width:900px;
+    }
     </style>
  </head>
   <body>
-
+    <div id="wrapper">
     <h1>{{ tournament_name }} (Live): details</h1>
     Date: {{ tournament.date }} <br>
 
@@ -61,7 +67,7 @@
 
     <hr>
 
-    <div class="row">
+    <div class="row" style='width:1800px'>
       <h2>Join Tournament</h2>
       <div class="column3">
 
@@ -122,7 +128,7 @@
     <hr>
 
     <div style="visibility:{{ tourn_visibility }}">
-    <div class="row">
+    <div class="row" style='width:1800px'>
       <div class="column23">
         <h2>Tournament Bracket (Seed: {{seed}})</h2>
       </div>
@@ -131,7 +137,7 @@
       </div>
     </div>
     
-    <div class="row">
+    <div class="row" style='width:1800px'>
       <div class="column3 border-right" style="text-align: right">
         {% autoescape false %}
           {{ winners_bracket_txt }}
@@ -219,7 +225,7 @@
 
     <div style="visibility:{{ tourn_visibility }}">
 
-    <div class="row">
+    <div class="row" style='width:1800px'>
       <div class="column23">
         <h2>Active Matches</h2>
       </div>
@@ -249,16 +255,16 @@
       </div>
     </div>
 
-    <div class="row" style='width:100%'>
+    <div class="row" style='width:1800px'>
     {% for active_match in active_match_txts %}
       {% autoescape false %}
-      <div class="row" style='width:100%'>
-        <div class="row" style='width:100%'>
+      <div class="row" style='width:1800px'>
+        <div class="row" style='width:900px'>
           {{ active_match }}
         </div>
         <div class="column23">
-          <div class="row" style='width:100%'>
-            <div class="col border-right" style="text-align:right;width:calc( 25% - 37.5px )">
+          <div class="row" style='width:900px'>
+            <div class="col border-right" style="text-align:right;width:200px">
               {{ stats[loop.index0] }}
             </div>
             <div class="col border-right" style="text-align:center;width:150px">
@@ -300,6 +306,6 @@
         {{line}}<br>
       {% endfor %}
     </div>
-    
+  </div> 
   </body>
 </html>
